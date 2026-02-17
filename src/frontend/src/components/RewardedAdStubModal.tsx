@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Play, X, CheckCircle2 } from 'lucide-react';
 import { ADMOB_CONFIG } from '../config/admob';
-import { useGetAppAdMobConfig } from '../hooks/useAppAdMobConfig';
+import { useGetAppAdMobConfigPublic } from '../hooks/useAppAdMobConfig';
 
 interface RewardedAdStubModalProps {
   open: boolean;
@@ -27,7 +27,7 @@ export default function RewardedAdStubModal({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [canClose, setCanClose] = useState(false);
-  const { data: adMobConfig } = useGetAppAdMobConfig();
+  const { data: adMobConfig } = useGetAppAdMobConfigPublic();
 
   const AD_DURATION = 40; // 40 seconds
 
@@ -113,37 +113,33 @@ export default function RewardedAdStubModal({
                 )}
               </div>
             )}
-
-            {/* Ad Badge */}
-            <div className="absolute top-2 left-2">
-              <Badge variant="secondary" className="text-xs">
-                Ad
-              </Badge>
-            </div>
           </div>
 
           {/* Progress Bar */}
           {isPlaying && (
             <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">{Math.round(progress)}%</span>
+              </div>
               <Progress value={progress} className="h-2" />
-              <p className="text-xs text-center text-muted-foreground">
-                {Math.round(progress)}% complete
-              </p>
             </div>
           )}
 
-          {/* AdMob Config Info */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-xs">
-            <p className="font-semibold text-foreground">AdMob Configuration:</p>
-            <p className="text-muted-foreground">
-              <span className="font-medium">App ID:</span> {displayAppId}
-            </p>
-            <p className="text-muted-foreground">
-              <span className="font-medium">Rewarded Ad Unit:</span> {displayRewardedAdUnitId}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 italic">
-              Note: This is a simulated ad for web prototype. Real AdMob integration requires native Android implementation.
-            </p>
+          {/* AdMob Configuration Display */}
+          <div className="space-y-3 p-4 bg-muted rounded-lg text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">AdMob App ID:</span>
+              <Badge variant="outline" className="font-mono text-xs">
+                {displayAppId}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Rewarded Ad Unit:</span>
+              <Badge variant="outline" className="font-mono text-xs">
+                {displayRewardedAdUnitId}
+              </Badge>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -166,10 +162,14 @@ export default function RewardedAdStubModal({
               </Button>
             ) : (
               <Button disabled className="flex-1" size="lg">
-                Please wait... ({remainingSeconds}s)
+                Please wait...
               </Button>
             )}
           </div>
+
+          <p className="text-xs text-center text-muted-foreground">
+            This is a simulated ad experience. In production, real AdMob ads will be displayed.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

@@ -30,13 +30,23 @@ export const AppAdMobConfig = IDL.Record({
   'appId' : IDL.Text,
   'rewardedAdUnitId' : IDL.Text,
 });
+export const AppMetrics = IDL.Record({
+  'installs' : IDL.Nat,
+  'blockedCount' : IDL.Nat,
+  'activeCount' : IDL.Nat,
+});
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const AppLogo = IDL.Record({
   'file' : ExternalBlob,
   'mediaType' : IDL.Text,
 });
+export const UserStatus = IDL.Variant({
+  'active' : IDL.Null,
+  'blocked' : IDL.Null,
+});
 export const UserOverview = IDL.Record({
+  'userStatuses' : IDL.Vec(IDL.Tuple(IDL.Principal, UserStatus)),
   'userProfiles' : IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile)),
   'sessions' : IDL.Vec(IDL.Tuple(IDL.Principal, SessionInfo)),
 });
@@ -70,9 +80,16 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'blockUser' : IDL.Func([IDL.Principal], [], []),
   'clearSessions' : IDL.Func([], [], []),
   'getAllSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
   'getAppAdMobConfig' : IDL.Func([], [IDL.Opt(AppAdMobConfig)], ['query']),
+  'getAppAdMobConfigPublic' : IDL.Func(
+      [],
+      [IDL.Opt(AppAdMobConfig)],
+      ['query'],
+    ),
+  'getAppMetrics' : IDL.Func([], [AppMetrics], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getLogo' : IDL.Func([], [IDL.Opt(AppLogo)], ['query']),
@@ -83,11 +100,14 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'incrementInstalls' : IDL.Func([], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCurrentPrincipalAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isUserBlocked' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'makeCurrentPrincipalAdmin' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setAppAdMobConfig' : IDL.Func([AppAdMobConfig], [], []),
+  'unblockUser' : IDL.Func([IDL.Principal], [], []),
   'unlockSessions' : IDL.Func([], [], []),
   'uploadLogo' : IDL.Func([AppLogo], [], []),
 });
@@ -117,10 +137,17 @@ export const idlFactory = ({ IDL }) => {
     'appId' : IDL.Text,
     'rewardedAdUnitId' : IDL.Text,
   });
+  const AppMetrics = IDL.Record({
+    'installs' : IDL.Nat,
+    'blockedCount' : IDL.Nat,
+    'activeCount' : IDL.Nat,
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const AppLogo = IDL.Record({ 'file' : ExternalBlob, 'mediaType' : IDL.Text });
+  const UserStatus = IDL.Variant({ 'active' : IDL.Null, 'blocked' : IDL.Null });
   const UserOverview = IDL.Record({
+    'userStatuses' : IDL.Vec(IDL.Tuple(IDL.Principal, UserStatus)),
     'userProfiles' : IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile)),
     'sessions' : IDL.Vec(IDL.Tuple(IDL.Principal, SessionInfo)),
   });
@@ -154,9 +181,16 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'blockUser' : IDL.Func([IDL.Principal], [], []),
     'clearSessions' : IDL.Func([], [], []),
     'getAllSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
     'getAppAdMobConfig' : IDL.Func([], [IDL.Opt(AppAdMobConfig)], ['query']),
+    'getAppAdMobConfigPublic' : IDL.Func(
+        [],
+        [IDL.Opt(AppAdMobConfig)],
+        ['query'],
+      ),
+    'getAppMetrics' : IDL.Func([], [AppMetrics], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getLogo' : IDL.Func([], [IDL.Opt(AppLogo)], ['query']),
@@ -167,11 +201,14 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'incrementInstalls' : IDL.Func([], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCurrentPrincipalAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isUserBlocked' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'makeCurrentPrincipalAdmin' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setAppAdMobConfig' : IDL.Func([AppAdMobConfig], [], []),
+    'unblockUser' : IDL.Func([IDL.Principal], [], []),
     'unlockSessions' : IDL.Func([], [], []),
     'uploadLogo' : IDL.Func([AppLogo], [], []),
   });

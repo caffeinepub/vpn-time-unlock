@@ -1,11 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Fix production deep-link routing for `/admin` so the Admin Dashboard reliably loads and never shows a blank/placeholder screen, and ensure the Admin Panel UI renders required sections with clear error states.
+**Goal:** Finalize VPN Super Pro by wiring Admin-saved AdMob and logo settings into the end-user app, completing key Admin Dashboard metrics and controls, adding Contact/Privacy pages, and producing a release APK artifact link.
 
 **Planned changes:**
-- Add a static-hosting-safe `/admin` entry that bootstraps the same React SPA so direct visits and refreshes on `/admin` load the app without requiring server rewrites.
-- Ensure the Admin Panel route renders for authenticated admins and displays two sections: “AdMob Settings” (App ID + Rewarded Ad Unit ID with Save) and “Users & Sessions Overview” (table or empty state).
-- Add in-page, readable error states (with retry/reload guidance) for admin status, AdMob config, and stats queries so the Admin Panel never appears as a blank/black screen.
+- Expose a non-admin-readable backend query for the current AdMob App ID and rewarded ad unit ID (returning null/empty when not configured) and update the frontend ad/unlock flow to use the saved config with a safe fallback to existing frontend defaults.
+- Ensure the logo uploaded in the Admin Panel is used consistently in the app UI (e.g., header/app shell) for all users, with a fallback icon when no logo exists.
+- Activate the Admin Dashboard to show live users (session-based) and a persistent total installs metric, and enable admin block/unblock controls for users; prevent blocked users from unlocking/using VPN sessions with a clear UI state/error.
+- Add a Contact Us page linked from the app UI with an English-only mailto link to Muhammadramadan121555@gmail.com.
+- Add a complete, professional Privacy Policy page linked from the app UI, including a Contact Us section that uses the configured support email from frontend/src/config/support.ts.
+- Produce a release Android APK and provide a direct download link as the build artifact output.
 
-**User-visible outcome:** Visiting or refreshing `https://vpn-time-unlock.caffeine.xyz/admin` loads the React app and shows the Admin Dashboard for admins, including AdMob settings and user/session stats, with clear error messaging if something fails.
+**User-visible outcome:** Users see the correct app logo and can unlock VPN access through an ad flow that uses Admin-configured AdMob IDs when available, with reliable fallbacks; admins can monitor live users and total installs and block/unblock users; users can access Contact Us and Privacy Policy pages; and a downloadable release APK link is available for sharing.

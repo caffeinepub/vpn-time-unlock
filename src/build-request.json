@@ -1,54 +1,147 @@
 {
   "kind": "build_request",
-  "title": "Fix production /admin route black screen and ensure Admin Dashboard loads",
-  "projectName": "VPN Time Unlock",
+  "title": "Finalize VPN Super Pro: admin ownership, dashboard metrics, contact/privacy pages, AdMob config usage, and APK artifact",
+  "projectName": "VPN Super Pro",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
-      "target": "frontend",
+      "text": "Make the AdMob configuration saved in the Admin Panel usable by the end-user app (not admin-only): expose a backend query that allows non-admin users to read the current AdMob App ID and rewarded ad unit ID, and update the frontend ad flow to use this saved config with a safe fallback when no config exists.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "when I open vpn-time-unlock.caffeine.xyz/admin, it still shows a black screen saying 'Publish or restore your app'. The Admin Dashboard is not loading. Please fix the Admin Panel UI immediately"
+          "Final Build: Integrate the Logo and AdMob IDs I saved in the Admin Panel.",
+          "Earning Ready: Ensure all Ad units are properly placed so earnings start as soon as users open the app."
         ]
       },
       "acceptanceCriteria": [
-        "Opening https://vpn-time-unlock.caffeine.xyz/admin in a fresh browser session loads the app UI (no platform placeholder/black screen).",
-        "Refreshing the page while on /admin continues to load the app and shows the Admin Panel route (not a 404/placeholder).",
-        "Navigation to /admin via the in-app button still works (History API navigation remains functional)."
+        "Backend provides a non-admin-readable query that returns the saved AdMob config (or null/empty when not set) without trapping for non-admin callers.",
+        "Frontend rewarded-ad flow uses the saved AdMob config for all users when available; if not available, it falls back to the values in frontend/src/config/admob.ts without breaking the UI.",
+        "Non-admin users do not see authorization/trap errors related to reading AdMob configuration during normal app usage."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
+      "text": "Ensure the app logo uploaded/saved in the Admin Panel is consistently used across the app UI (header/app shell) for all users, with a clear fallback icon when no logo exists.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "so I can see the AdMob settings and User Stats"
+          "Final Build: Integrate the Logo and AdMob IDs I saved in the Admin Panel."
         ]
       },
       "acceptanceCriteria": [
-        "When logged in as an admin, the Admin Panel page visibly shows an “AdMob Settings” section with the two inputs and a working Save action.",
-        "When logged in as an admin, the Admin Panel page visibly shows a “Users & Sessions Overview” section with a table (or an explicit empty-state message when there is no data).",
-        "If admin status/overview/AdMob config queries error, the Admin Panel shows a readable error message in the page (not a blank screen), including a retry affordance (button or reload guidance)."
+        "When a logo exists in the backend, the main app header displays it for authenticated and unauthenticated users.",
+        "When no logo exists, the app displays the existing fallback icon without layout breakage."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Activate and complete the Admin Dashboard experience to monitor: (a) live users, (b) total installs, and (c) block/unblock any user. Add an installs metric backed by persistent backend data and render it in the admin dashboard alongside existing metrics.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Admin Dashboard: Activate the dashboard where I can monitor live users, total installs, and block any user if needed."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin dashboard shows a 'Live Users' metric derived from currently active sessions (time-based).",
+        "Backend persists a 'total installs' (or equivalent unique install count) metric and exposes it via an admin-only overview endpoint.",
+        "Frontend Admin Panel displays 'Total Installs' as a separate metric from total registered user count (even if they are equal initially, the fields must be distinct and backed by backend data).",
+        "Admin can block and unblock users from the Admin Panel, and the blocked status is reflected in the UI for each user row.",
+        "A blocked user is prevented from unlocking/using VPN sessions and receives a clear error/state in the VPN panel."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add a 'Contact Us' page and link it from the app UI; the page must provide a mailto link to Muhammadramadan121555@gmail.com so users can reach support.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Support & Contact: Ensure the 'Contact Us' page is linked to my email: Muhammadramadan121555@gmail.com so users can reach me."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new route/page exists for 'Contact Us' and is accessible from the main app navigation (e.g., footer link).",
+        "The Contact Us page displays the support email and includes a working mailto link to Muhammadramadan121555@gmail.com.",
+        "All user-facing text on the Contact Us page is in English."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Ensure the Privacy Policy page is complete, professional, and accessible from the app UI (footer or equivalent), and that it uses the configured support email for contact.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Privacy Policy: Generate a complete Privacy Policy page to ensure the app is professional and safe."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Privacy Policy page is reachable from the app UI and loads without authentication errors.",
+        "Privacy Policy page includes a clear 'Contact Us' section that uses the support email from frontend/src/config/support.ts.",
+        "All user-facing text on the Privacy Policy page is in English."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Earning-ready ad placement: ensure that the app’s ad experience is presented immediately when users attempt to unlock VPN access, and that the ad configuration shown/used comes from the saved AdMob IDs when available.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Earning Ready: Ensure all Ad units are properly placed so earnings start as soon as users open the app."
+        ]
+      },
+      "acceptanceCriteria": [
+        "From the locked VPN state, the primary CTA reliably opens the ad experience without errors.",
+        "The ad experience displays/uses the saved AdMob App ID and rewarded ad unit ID (when configured), otherwise falls back to placeholders.",
+        "No admin-only API calls are required for normal (non-admin) users to reach the ad experience flow."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Generate the final Android APK artifact for the current release build of 'VPN Super Pro' and provide a direct download link as build output.",
+      "target": "unknown",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Generate APK: Now, please provide the direct download link for the final APK file so I can start sharing it on WhatsApp.",
+          "Please confirm once the APK is ready for download."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A release APK is produced for the current app version.",
+        "A direct download URL for the APK is returned/recorded as the build artifact link for sharing."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (compose existing UI components instead).",
-    "Do not modify immutable hook files listed in the SYSTEM_CONTEXT (implement fixes in other frontend files such as pages/components/assets)."
+    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo changes only if state schema must be upgraded.",
+    "Do not edit files under frontend/src/components/ui or any other paths listed in frontend.immutablePaths; compose existing UI components instead.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Implementing real Google AdMob SDK integration (native mobile) beyond storing/displaying IDs.",
-    "Adding new authentication providers beyond Internet Identity.",
-    "Adding real-time updates (websockets) for user stats."
+    "Implementing real native Google Mobile Ads SDK integration inside Android (beyond the app’s existing simulated ad flow) is out of scope for this web-based codebase unless separately provided/required by the build environment.",
+    "Integrations with WhatsApp sharing APIs are out of scope; only provide an APK download link suitable for manual sharing.",
+    "Adding third-party authentication methods beyond Internet Identity is out of scope."
   ],
   "imageRequirements": {
     "required": [],

@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-production-deep-link-routing-so-visiting-https-vpn-time-unlock-caffeine-xyz-admin-loads-the-react-spa-and-renders-the-admin-panel-instead-of-a-black-screen-saying-publish-or-restore-your-app-implement-a-static-hosting-safe-solution-that-does-not-rely-on-server-rewrites-e-g-provide-an-admin-entry-html-that-bootstraps-the-same-app",
-      "featureTitle": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
+      "featureId": "feature-make-the-admob-configuration-saved-in-the-admin-panel-usable-by-the-end-user-app-not-admin-only-expose-a-backend-query-that-allows-non-admin-users-to-read-the-current-admob-app-id-and-rewarded-ad-unit-id-and-update-the-frontend-ad-flow-to-use-this-saved-config-with-a-safe-fallback-when-no-config-exists",
+      "featureTitle": "Make the AdMob configuration saved in the Admin Panel usable by the end-user app (not admin-only): expose a backend query that allows non-admin users to read the current AdMob App ID and rewarded ad unit ID, and update the frontend ad flow to use this saved config with a safe fallback when no config exists.",
       "files": [
-        "frontend/public/admin/index.html",
-        "frontend/src/App.tsx"
+        "frontend/src/components/RewardedAdStubModal.tsx",
+        "frontend/src/hooks/useAppAdMobConfig.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,10 +23,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-admin-panel-dashboard-ui-renders-and-exposes-the-two-requested-sections-for-authenticated-admins-1-admob-settings-app-id-rewarded-ad-unit-id-with-save-and-2-user-stats-users-sessions-overview-table-add-a-clear-in-ui-error-state-if-any-of-the-admin-queries-fail-so-the-page-never-appears-as-a-blank-black-screen",
-      "featureTitle": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
+      "featureId": "feature-ensure-the-app-logo-uploaded-saved-in-the-admin-panel-is-consistently-used-across-the-app-ui-header-app-shell-for-all-users-with-a-clear-fallback-icon-when-no-logo-exists",
+      "featureTitle": "Ensure the app logo uploaded/saved in the Admin Panel is consistently used across the app UI (header/app shell) for all users, with a clear fallback icon when no logo exists.",
       "files": [
-        "frontend/src/pages/AdminPanelPage.tsx"
+        "frontend/src/App.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -39,6 +39,109 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-activate-and-complete-the-admin-dashboard-experience-to-monitor-a-live-users-b-total-installs-and-c-block-unblock-any-user-add-an-installs-metric-backed-by-persistent-backend-data-and-render-it-in-the-admin-dashboard-alongside-existing-metrics",
+      "featureTitle": "Activate and complete the Admin Dashboard experience to monitor: (a) live users, (b) total installs, and (c) block/unblock any user. Add an installs metric backed by persistent backend data and render it in the admin dashboard alongside existing metrics.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/AdminPanelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-contact-us-page-and-link-it-from-the-app-ui-the-page-must-provide-a-mailto-link-to-muhammadramadan121555-gmail-com-so-users-can-reach-support",
+      "featureTitle": "Add a 'Contact Us' page and link it from the app UI; the page must provide a mailto link to Muhammadramadan121555@gmail.com so users can reach support.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/ContactUsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-privacy-policy-page-is-complete-professional-and-accessible-from-the-app-ui-footer-or-equivalent-and-that-it-uses-the-configured-support-email-for-contact",
+      "featureTitle": "Ensure the Privacy Policy page is complete, professional, and accessible from the app UI (footer or equivalent), and that it uses the configured support email for contact.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/PrivacyPolicyPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-earning-ready-ad-placement-ensure-that-the-app-s-ad-experience-is-presented-immediately-when-users-attempt-to-unlock-vpn-access-and-that-the-ad-configuration-shown-used-comes-from-the-saved-admob-ids-when-available",
+      "featureTitle": "Earning-ready ad placement: ensure that the app’s ad experience is presented immediately when users attempt to unlock VPN access, and that the ad configuration shown/used comes from the saved AdMob IDs when available.",
+      "files": [
+        "frontend/src/components/RewardedAdStubModal.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-generate-the-final-android-apk-artifact-for-the-current-release-build-of-vpn-super-pro-and-provide-a-direct-download-link-as-build-output",
+      "featureTitle": "Generate the final Android APK artifact for the current release build of 'VPN Super Pro' and provide a direct download link as build output.",
+      "files": [
+        "frontend/README.md"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

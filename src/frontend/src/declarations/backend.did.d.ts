@@ -15,10 +15,16 @@ export interface AppAdMobConfig {
   'rewardedAdUnitId' : string,
 }
 export interface AppLogo { 'file' : ExternalBlob, 'mediaType' : string }
+export interface AppMetrics {
+  'installs' : bigint,
+  'blockedCount' : bigint,
+  'activeCount' : bigint,
+}
 export type ExternalBlob = Uint8Array;
 export interface SessionInfo { 'unlockExpiresAt' : Time }
 export type Time = bigint;
 export interface UserOverview {
+  'userStatuses' : Array<[Principal, UserStatus]>,
   'userProfiles' : Array<[Principal, UserProfile]>,
   'sessions' : Array<[Principal, SessionInfo]>,
 }
@@ -26,6 +32,8 @@ export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export type UserStatus = { 'active' : null } |
+  { 'blocked' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -55,20 +63,26 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'blockUser' : ActorMethod<[Principal], undefined>,
   'clearSessions' : ActorMethod<[], undefined>,
   'getAllSessions' : ActorMethod<[], Array<SessionInfo>>,
   'getAppAdMobConfig' : ActorMethod<[], [] | [AppAdMobConfig]>,
+  'getAppAdMobConfigPublic' : ActorMethod<[], [] | [AppAdMobConfig]>,
+  'getAppMetrics' : ActorMethod<[], AppMetrics>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getLogo' : ActorMethod<[], [] | [AppLogo]>,
   'getSessions' : ActorMethod<[], SessionInfo>,
   'getUserOverview' : ActorMethod<[], UserOverview>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'incrementInstalls' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCurrentPrincipalAdmin' : ActorMethod<[], boolean>,
+  'isUserBlocked' : ActorMethod<[Principal], boolean>,
   'makeCurrentPrincipalAdmin' : ActorMethod<[string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setAppAdMobConfig' : ActorMethod<[AppAdMobConfig], undefined>,
+  'unblockUser' : ActorMethod<[Principal], undefined>,
   'unlockSessions' : ActorMethod<[], undefined>,
   'uploadLogo' : ActorMethod<[AppLogo], undefined>,
 }

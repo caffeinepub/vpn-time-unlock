@@ -1,49 +1,125 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T06:22:12.371Z",
+  "generatedAt": "2026-02-17T11:00:39.822Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 7,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
+        "summary": "Make the AdMob configuration saved in the Admin Panel usable by the end-user app (not admin-only): expose a backend query that allows non-admin users to read the current AdMob App ID and rewarded ad unit ID, and update the frontend ad flow to use this saved config with a safe fallback when no config exists.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/admin/index.html",
-          "frontend/src/App.tsx"
+          "frontend/src/hooks/useAppAdMobConfig.ts",
+          "frontend/src/components/RewardedAdStubModal.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/admin/index.html",
-          "frontend/src/App.tsx"
+          "frontend/src/hooks/useAppAdMobConfig.ts",
+          "frontend/src/components/RewardedAdStubModal.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
+        "summary": "Ensure the app logo uploaded/saved in the Admin Panel is consistently used across the app UI (header/app shell) for all users, with a clear fallback icon when no logo exists.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/AdminPanelPage.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useAppLogo.ts"
         ],
         "matchedFiles": [
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Activate and complete the Admin Dashboard experience to monitor: (a) live users, (b) total installs, and (c) block/unblock any user. Add an installs metric backed by persistent backend data and render it in the admin dashboard alongside existing metrics.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useAdminPanel.ts",
+          "frontend/src/pages/AdminPanelPage.tsx",
+          "frontend/src/components/VpnSessionPanel.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
           "frontend/src/pages/AdminPanelPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add a 'Contact Us' page and link it from the app UI; the page must provide a mailto link to Muhammadramadan121555@gmail.com so users can reach support.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/ContactUsPage.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/ContactUsPage.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Ensure the Privacy Policy page is complete, professional, and accessible from the app UI (footer or equivalent), and that it uses the configured support email for contact.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/PrivacyPolicyPage.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/PrivacyPolicyPage.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Earning-ready ad placement: ensure that the app’s ad experience is presented immediately when users attempt to unlock VPN access, and that the ad configuration shown/used comes from the saved AdMob IDs when available.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VpnSessionPanel.tsx",
+          "frontend/src/components/RewardedAdStubModal.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/RewardedAdStubModal.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Generate the final Android APK artifact for the current release build of 'VPN Super Pro' and provide a direct download link as build output.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/README.md"
+        ],
+        "matchedFiles": [
+          "frontend/README.md"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/admin/index.html",
+    "frontend/README.md",
     "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/RewardedAdStubModal.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useAppAdMobConfig.ts",
+    "frontend/src/hooks/useAppMetrics.ts",
     "frontend/src/pages/AdminPanelPage.tsx",
+    "frontend/src/pages/ContactUsPage.tsx",
+    "frontend/src/pages/PrivacyPolicyPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -3,16 +3,19 @@ import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useIsCurrentPrincipalAdmin, useGetAdminOverview } from '../hooks/useAdminPanel';
 import { useGetAppAdMobConfig, useSetAppAdMobConfig } from '../hooks/useAppAdMobConfig';
 import { useGetLogo, useUploadLogo } from '../hooks/useAppLogo';
+import { useGetAppMetrics } from '../hooks/useAppMetrics';
+import { useBlockUser, useUnblockUser } from '../hooks/useUserBlocking';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone, Image as ImageIcon, Upload, RefreshCw } from 'lucide-react';
+import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone, Image as ImageIcon, Upload, RefreshCw, Ban, CheckCircle, TrendingUp, Activity, Download } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { ExternalBlob } from '../backend';
+import { ExternalBlob, UserStatus } from '../backend';
+import { Principal } from '@dfinity/principal';
 
 export default function AdminPanelPage() {
   const { identity } = useInternetIdentity();
@@ -20,8 +23,11 @@ export default function AdminPanelPage() {
   const { data: overview, isLoading: overviewLoading, isError: overviewError, error: overviewErrorObj, refetch: refetchOverview } = useGetAdminOverview();
   const { data: adMobConfig, isLoading: adMobConfigLoading, isError: adMobConfigError, error: adMobConfigErrorObj, refetch: refetchAdMobConfig } = useGetAppAdMobConfig();
   const { data: currentLogo, isLoading: logoLoading } = useGetLogo();
+  const { data: metrics, isLoading: metricsLoading } = useGetAppMetrics();
   const setAdMobConfig = useSetAppAdMobConfig();
   const uploadLogo = useUploadLogo();
+  const blockUser = useBlockUser();
+  const unblockUser = useUnblockUser();
 
   const [appId, setAppId] = useState('');
   const [rewardedAdUnitId, setRewardedAdUnitId] = useState('');
@@ -40,6 +46,18 @@ export default function AdminPanelPage() {
       setHasInitializedAdMob(true);
     }
   }, [adMobConfig, hasInitializedAdMob]);
+
+  // Calculate metrics from overview
+  const totalUserCount = overview?.userProfiles.length || 0;
+  const activeUsersCount = overview?.sessions.filter(([_, session]) => {
+    const now = BigInt(Date.now()) * BigInt(1_000_000);
+    return session.unlockExpiresAt > now;
+  }).length || 0;
+
+  // Get metrics from backend
+  const totalInstalls = metrics ? Number(metrics.installs) : 0;
+  const activeCount = metrics ? Number(metrics.activeCount) : 0;
+  const blockedCount = metrics ? Number(metrics.blockedCount) : 0;
 
   // Handle logo file selection
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,14 +98,13 @@ export default function AdminPanelPage() {
     try {
       const arrayBuffer = await logoFile.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
-      
-      const externalBlob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
         setUploadProgress(percentage);
       });
 
       await uploadLogo.mutateAsync({
-        file: externalBlob,
         mediaType: logoFile.type,
+        file: blob,
       });
 
       toast.success('Logo uploaded successfully');
@@ -101,405 +118,413 @@ export default function AdminPanelPage() {
     }
   };
 
-  // Error state for admin status check
-  if (isAdminError) {
-    return (
-      <div className="w-full max-w-2xl mx-auto">
-        <Card className="border-destructive">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-              <div>
-                <CardTitle className="text-2xl">Error Loading Admin Panel</CardTitle>
-                <CardDescription>Failed to verify admin status</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Connection Error</AlertTitle>
-              <AlertDescription>
-                {adminError?.message || 'Unable to connect to the backend. Please check your connection and try again.'}
-              </AlertDescription>
-            </Alert>
-            <Button onClick={() => refetchAdminStatus()} variant="outline" className="w-full">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleBlockUser = async (userPrincipal: Principal) => {
+    try {
+      await blockUser.mutateAsync(userPrincipal);
+      toast.success('User blocked successfully');
+    } catch (error: any) {
+      console.error('Failed to block user:', error);
+      toast.error(error.message || 'Failed to block user');
+    }
+  };
 
-  // Loading state
+  const handleUnblockUser = async (userPrincipal: Principal) => {
+    try {
+      await unblockUser.mutateAsync(userPrincipal);
+      toast.success('User unblocked successfully');
+    } catch (error: any) {
+      console.error('Failed to unblock user:', error);
+      toast.error(error.message || 'Failed to unblock user');
+    }
+  };
+
   if (isAdminLoading) {
     return (
       <div className="w-full max-w-6xl mx-auto">
         <Card>
           <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Checking admin status...</p>
+            <p className="text-muted-foreground">Verifying admin access...</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Access denied for non-admins
-  if (!isAdmin) {
+  if (isAdminError || !isAdmin) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <Card className="border-destructive">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <ShieldX className="w-8 h-8 text-destructive" />
-              <div>
-                <CardTitle className="text-2xl">Access Denied</CardTitle>
-                <CardDescription>You do not have permission to view this page</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTitle>Unauthorized</AlertTitle>
-              <AlertDescription>
-                Only administrators can access the admin panel. If you believe you should have access,
-                please contact the system administrator.
-              </AlertDescription>
-            </Alert>
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Your Principal:</strong>
-              </p>
-              <p className="text-xs font-mono mt-1 break-all">{callerPrincipal}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="w-full max-w-6xl mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>
+            {isAdminError
+              ? `Error: ${adminError?.message || 'Failed to verify admin status'}`
+              : 'You do not have admin privileges to access this panel.'}
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={() => refetchAdminStatus()} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Admin panel content
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
-      {/* Admin Status Card */}
-      <Card className="border-emerald-500/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-8 h-8 text-emerald-500" />
-              <div>
-                <CardTitle className="text-2xl">Admin Panel</CardTitle>
-                <CardDescription>System administration and user management</CardDescription>
-              </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
+          <p className="text-muted-foreground mt-1">Manage users, settings, and monitor app metrics</p>
+        </div>
+        <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">
+          <ShieldCheck className="w-3 h-3 mr-1" />
+          Admin
+        </Badge>
+      </div>
+
+      {/* Metrics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Installs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{metricsLoading ? '...' : totalInstalls}</div>
+              <Download className="w-8 h-8 text-emerald-600 opacity-50" />
             </div>
-            <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
-              Administrator
-            </Badge>
-          </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{overviewLoading ? '...' : totalUserCount}</div>
+              <Users className="w-8 h-8 text-blue-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Live Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{overviewLoading ? '...' : activeUsersCount}</div>
+              <Activity className="w-8 h-8 text-green-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Blocked Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{metricsLoading ? '...' : blockedCount}</div>
+              <Ban className="w-8 h-8 text-red-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* User Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            User Management
+          </CardTitle>
+          <CardDescription>View and manage all registered users</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground mb-1">
-              <strong>Your Principal ID:</strong>
-            </p>
-            <p className="text-xs font-mono break-all">{callerPrincipal}</p>
-          </div>
+          {overviewLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : overviewError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error Loading Users</AlertTitle>
+              <AlertDescription>
+                {overviewErrorObj?.message || 'Failed to load user overview'}
+              </AlertDescription>
+            </Alert>
+          ) : !overview || overview.userProfiles.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No users registered yet
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Principal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Session</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {overview.userProfiles.map(([principal, profile]) => {
+                    const principalStr = principal.toString();
+                    const session = overview.sessions.find(([p]) => p.toString() === principalStr);
+                    const userStatus = overview.userStatuses.find(([p]) => p.toString() === principalStr)?.[1];
+                    const isBlocked = userStatus === UserStatus.blocked;
+                    const isCurrentUser = principalStr === callerPrincipal;
+
+                    const now = BigInt(Date.now()) * BigInt(1_000_000);
+                    const hasActiveSession = session && session[1].unlockExpiresAt > now;
+
+                    return (
+                      <TableRow key={principalStr}>
+                        <TableCell className="font-medium">{profile.name}</TableCell>
+                        <TableCell className="font-mono text-xs max-w-[200px] truncate">
+                          {principalStr}
+                        </TableCell>
+                        <TableCell>
+                          {isBlocked ? (
+                            <Badge variant="destructive">
+                              <ShieldX className="w-3 h-3 mr-1" />
+                              Blocked
+                            </Badge>
+                          ) : (
+                            <Badge variant="default" className="bg-emerald-600">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Active
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {hasActiveSession ? (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              Connected
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-gray-500">
+                              Inactive
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isCurrentUser ? (
+                            <Badge variant="secondary">You</Badge>
+                          ) : isBlocked ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUnblockUser(principal)}
+                              disabled={unblockUser.isPending}
+                            >
+                              {unblockUser.isPending ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Unblock
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleBlockUser(principal)}
+                              disabled={blockUser.isPending}
+                            >
+                              {blockUser.isPending ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Ban className="w-3 h-3 mr-1" />
+                                  Block
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Logo/Branding Card */}
+      {/* AdMob Configuration */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <ImageIcon className="w-6 h-6 text-primary" />
-            <div>
-              <CardTitle>App Logo</CardTitle>
-              <CardDescription>Upload and manage your application logo</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            AdMob Configuration
+          </CardTitle>
+          <CardDescription>Configure AdMob IDs for production ad serving</CardDescription>
         </CardHeader>
-        <CardContent>
-          {logoLoading ? (
-            <div className="py-8 flex flex-col items-center justify-center gap-4">
+        <CardContent className="space-y-4">
+          {adMobConfigLoading ? (
+            <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Loading logo...</p>
+            </div>
+          ) : adMobConfigError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error Loading AdMob Config</AlertTitle>
+              <AlertDescription>
+                {adMobConfigErrorObj?.message || 'Failed to load AdMob configuration'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="appId">AdMob App ID</Label>
+                <Input
+                  id="appId"
+                  placeholder="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
+                  value={appId}
+                  onChange={(e) => setAppId(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your AdMob application ID (found in AdMob console)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rewardedAdUnitId">Rewarded Ad Unit ID</Label>
+                <Input
+                  id="rewardedAdUnitId"
+                  placeholder="ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ"
+                  value={rewardedAdUnitId}
+                  onChange={(e) => setRewardedAdUnitId(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your rewarded ad unit ID for VPN unlock ads
+                </p>
+              </div>
+
+              <Button
+                onClick={handleSaveAdMobConfig}
+                disabled={setAdMobConfig.isPending || !appId.trim() || !rewardedAdUnitId.trim()}
+                className="w-full"
+              >
+                {setAdMobConfig.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save AdMob Configuration
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Logo Upload */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5" />
+            App Logo
+          </CardTitle>
+          <CardDescription>Upload a custom logo for your app (recommended: 512x512px)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {logoLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Current Logo Preview */}
+            <>
               {currentLogo && (
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                  <img
+                    src={currentLogo.file.getDirectURL()}
+                    alt="Current Logo"
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Logo</p>
+                    <p className="text-xs text-muted-foreground">{currentLogo.mediaType}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="logo">Upload New Logo</Label>
+                <Input
+                  id="logo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoFileChange}
+                />
+              </div>
+
+              {logoPreview && (
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                  <img
+                    src={logoPreview}
+                    alt="Logo Preview"
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Preview</p>
+                    <p className="text-xs text-muted-foreground">{logoFile?.name}</p>
+                  </div>
+                </div>
+              )}
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="space-y-2">
-                  <Label>Current Logo</Label>
-                  <div className="w-32 h-32 rounded-lg border-2 border-muted overflow-hidden bg-muted flex items-center justify-center">
-                    <img
-                      src={currentLogo.file.getDirectURL()}
-                      alt="Current Logo"
-                      className="w-full h-full object-cover"
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Uploading...</span>
+                    <span className="font-medium">{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-emerald-600 h-2 rounded-full transition-all"
+                      style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              {/* Upload New Logo */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="logoFile">Upload New Logo</Label>
-                  <Input
-                    id="logoFile"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoFileChange}
-                    disabled={uploadLogo.isPending}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Select an image file (PNG, JPG, SVG, etc.) to use as your app logo
-                  </p>
-                </div>
-
-                {/* Preview Selected Logo */}
-                {logoPreview && (
-                  <div className="space-y-2">
-                    <Label>Preview</Label>
-                    <div className="w-32 h-32 rounded-lg border-2 border-primary overflow-hidden bg-muted flex items-center justify-center">
-                      <img
-                        src={logoPreview}
-                        alt="Logo Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
+              <Button
+                onClick={handleUploadLogo}
+                disabled={!logoFile || uploadLogo.isPending || uploadProgress > 0}
+                className="w-full"
+              >
+                {uploadLogo.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Logo
+                  </>
                 )}
-
-                {/* Upload Progress */}
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Uploading...</span>
-                      <span className="font-medium">{uploadProgress}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-primary h-full transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handleUploadLogo}
-                  disabled={!logoFile || uploadLogo.isPending}
-                  className="min-w-32"
-                >
-                  {uploadLogo.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      {currentLogo ? 'Update Logo' : 'Upload Logo'}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* AdMob Settings Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Smartphone className="w-6 h-6 text-primary" />
-            <div>
-              <CardTitle>AdMob Settings</CardTitle>
-              <CardDescription>Configure your Google AdMob integration</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {adMobConfigError ? (
-            <div className="space-y-4">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading AdMob Configuration</AlertTitle>
-                <AlertDescription>
-                  {adMobConfigErrorObj?.message || 'Failed to load AdMob settings. Please try again.'}
-                </AlertDescription>
-              </Alert>
-              <Button onClick={() => refetchAdMobConfig()} variant="outline" className="w-full">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry Loading AdMob Config
               </Button>
-            </div>
-          ) : adMobConfigLoading ? (
-            <div className="py-8 flex flex-col items-center justify-center gap-4">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Loading AdMob configuration...</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="appId">AdMob App ID</Label>
-                  <Input
-                    id="appId"
-                    type="text"
-                    placeholder="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
-                    value={appId}
-                    onChange={(e) => setAppId(e.target.value)}
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Your AdMob Application ID from the AdMob console
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="rewardedAdUnitId">Rewarded Ad Unit ID</Label>
-                  <Input
-                    id="rewardedAdUnitId"
-                    type="text"
-                    placeholder="ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY"
-                    value={rewardedAdUnitId}
-                    onChange={(e) => setRewardedAdUnitId(e.target.value)}
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Your Rewarded Ad Unit ID for unlocking VPN sessions
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleSaveAdMobConfig}
-                  disabled={setAdMobConfig.isPending || !appId.trim() || !rewardedAdUnitId.trim()}
-                  className="min-w-32"
-                >
-                  {setAdMobConfig.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </>
-                  )}
-                </Button>
-                {adMobConfig && (
-                  <p className="text-xs text-muted-foreground">
-                    Configuration saved and active
-                  </p>
-                )}
-              </div>
-
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Production Setup Required</AlertTitle>
-                <AlertDescription className="text-xs">
-                  These IDs are displayed in the simulated ad modal. For production Android apps,
-                  integrate the Google Mobile Ads SDK following the documentation in{' '}
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">frontend/src/config/admob.ts</code>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Users & Sessions Overview Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Users className="w-6 h-6 text-primary" />
-            <div>
-              <CardTitle>Users & Sessions Overview</CardTitle>
-              <CardDescription>View all registered users and their session status</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {overviewError ? (
-            <div className="space-y-4">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading User Overview</AlertTitle>
-                <AlertDescription>
-                  {overviewErrorObj?.message || 'Failed to load user data. Please try again.'}
-                </AlertDescription>
-              </Alert>
-              <Button onClick={() => refetchOverview()} variant="outline" className="w-full">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry Loading Users
-              </Button>
-            </div>
-          ) : overviewLoading ? (
-            <div className="py-8 flex flex-col items-center justify-center gap-4">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Loading user overview...</p>
-            </div>
-          ) : !overview || (overview.userProfiles.length === 0 && overview.sessions.length === 0) ? (
-            <div className="py-12 text-center">
-              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No users or sessions yet</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Users will appear here once they log in and create profiles
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Principal ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Session Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {overview.userProfiles.map(([principal, profile]) => {
-                      const session = overview.sessions.find(([p]) => p.toString() === principal.toString());
-                      const hasActiveSession = session && Number(session[1].unlockExpiresAt) > Date.now() * 1_000_000;
-
-                      return (
-                        <TableRow key={principal.toString()}>
-                          <TableCell className="font-mono text-xs max-w-xs truncate">
-                            {principal.toString()}
-                          </TableCell>
-                          <TableCell className="font-medium">{profile.name}</TableCell>
-                          <TableCell>
-                            {hasActiveSession ? (
-                              <Badge variant="default" className="bg-emerald-500">
-                                Active
-                              </Badge>
-                            ) : session ? (
-                              <Badge variant="secondary">Expired</Badge>
-                            ) : (
-                              <Badge variant="outline">No Session</Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Total Users: {overview.userProfiles.length}</span>
-                <span>Active Sessions: {overview.sessions.filter(([_, s]) => Number(s.unlockExpiresAt) > Date.now() * 1_000_000).length}</span>
-              </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

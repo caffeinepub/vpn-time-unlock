@@ -3,23 +3,29 @@ import { useSessionStatus } from '../hooks/useSessionStatus';
 import { useUnlockSession } from '../hooks/useUnlockSession';
 import { useDisconnectSession } from '../hooks/useDisconnectSession';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
+import { useIsCurrentUserBlocked } from '../hooks/useUserBlocking';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Clock, Unlock, Power, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Shield, Clock, Unlock, Power, Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { formatTime } from '../utils/timeFormat';
 import RewardedAdStubModal from './RewardedAdStubModal';
 
 export default function VpnSessionPanel() {
   const { data: userProfile } = useGetCallerUserProfile();
   const { sessionStatus, remainingSeconds, isActive, isExpired, isLoading } = useSessionStatus();
+  const { data: isBlocked, isLoading: isBlockedLoading } = useIsCurrentUserBlocked();
   const unlockSession = useUnlockSession();
   const disconnectSession = useDisconnectSession();
   const [showAdModal, setShowAdModal] = useState(false);
 
   const handleUnlockClick = () => {
+    if (isBlocked) {
+      return; // Prevent opening modal if blocked
+    }
     setShowAdModal(true);
   };
 
@@ -36,13 +42,48 @@ export default function VpnSessionPanel() {
     await disconnectSession.mutateAsync();
   };
 
-  if (isLoading) {
+  if (isLoading || isBlockedLoading) {
     return (
       <div className="w-full max-w-2xl mx-auto">
         <Card>
           <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading session status...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Blocked User State
+  if (isBlocked) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <Card className="border-2 border-destructive/50 shadow-xl">
+          <CardHeader className="text-center pb-4">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg">
+              <XCircle className="w-12 h-12 text-white" />
+            </div>
+            <CardTitle className="text-3xl mb-2">Account Blocked</CardTitle>
+            <CardDescription className="text-base">
+              Your account has been blocked by an administrator
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Access Restricted</AlertTitle>
+              <AlertDescription>
+                You cannot unlock VPN sessions at this time. If you believe this is an error, 
+                please contact support for assistance.
+              </AlertDescription>
+            </Alert>
+
+            {userProfile && (
+              <p className="text-center text-sm text-muted-foreground">
+                Account: {userProfile.name}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

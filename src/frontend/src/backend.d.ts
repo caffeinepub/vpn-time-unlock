@@ -18,6 +18,11 @@ export interface SessionInfo {
     unlockExpiresAt: Time;
 }
 export type Time = bigint;
+export interface AppMetrics {
+    installs: bigint;
+    blockedCount: bigint;
+    activeCount: bigint;
+}
 export interface AppLogo {
     file: ExternalBlob;
     mediaType: string;
@@ -27,6 +32,7 @@ export interface AppAdMobConfig {
     rewardedAdUnitId: string;
 }
 export interface UserOverview {
+    userStatuses: Array<[Principal, UserStatus]>;
     userProfiles: Array<[Principal, UserProfile]>;
     sessions: Array<[Principal, SessionInfo]>;
 }
@@ -38,22 +44,32 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export enum UserStatus {
+    active = "active",
+    blocked = "blocked"
+}
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    blockUser(user: Principal): Promise<void>;
     clearSessions(): Promise<void>;
     getAllSessions(): Promise<Array<SessionInfo>>;
     getAppAdMobConfig(): Promise<AppAdMobConfig | null>;
+    getAppAdMobConfigPublic(): Promise<AppAdMobConfig | null>;
+    getAppMetrics(): Promise<AppMetrics>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getLogo(): Promise<AppLogo | null>;
     getSessions(): Promise<SessionInfo>;
     getUserOverview(): Promise<UserOverview>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    incrementInstalls(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     isCurrentPrincipalAdmin(): Promise<boolean>;
+    isUserBlocked(user: Principal): Promise<boolean>;
     makeCurrentPrincipalAdmin(token: string, userProvidedToken: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setAppAdMobConfig(newConfig: AppAdMobConfig): Promise<void>;
+    unblockUser(user: Principal): Promise<void>;
     unlockSessions(): Promise<void>;
     uploadLogo(newLogo: AppLogo): Promise<void>;
 }

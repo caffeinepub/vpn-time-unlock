@@ -1,25 +1,32 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T06:22:12.368Z",
-  "summary": "REQ-1 appears implemented via a new static /admin entry HTML plus pathname-based client routing normalization in App.tsx. REQ-2 appears implemented via an AdminPanelPage that includes AdMob Settings inputs with save, a Users & Sessions overview table/empty state, and explicit in-UI error handling with retry/refetch affordances. The diff also introduces additional admin functionality (logo upload) that was not requested.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-17T11:00:39.819Z",
+  "summary": "Most requirements appear implemented: public AdMob config query + frontend fallback usage, global logo usage with fallback, admin metrics including installs, block/unblock flows (with blocked-user handling in VPN panel per file summary), and new Contact Us + updated Privacy Policy pages using the configured support email. The only clearly unimplemented requirement from the diff summary is generating and providing a direct download link to a release Android APK artifact.",
+  "missing_requirements": [
     {
-      "description": "Admin Panel includes app logo management (fetching current logo and uploading a new logo with preview and upload progress).",
-      "reason": "BuildRequest REQ-2 only asks for AdMob Settings and User Stats sections; logo upload/settings are not requested.",
+      "id": "REQ-7",
+      "requirement": "Generate the final Android APK artifact for the current release build of 'VPN Super Pro' and provide a direct download link as build output.",
+      "reason": "The diff shows frontend/backend code changes and documentation updates, but no build pipeline/output artifact or recorded direct download URL for a release APK is present in the provided diff summary.",
       "evidence": [
-        "frontend/src/pages/AdminPanelPage.tsx (imports/use of useGetLogo, useUploadLogo; logoFile/logoPreview/uploadProgress state; handleUploadLogo/handleLogoFileChange logic)",
-        "frontend/src/App.tsx (imports/use of useGetLogo and renders logo in header)"
+        "frontend/README.md (mentions APK generation guidance but no artifact/link in diff summary)"
       ]
     }
   ],
-  "confidence": 0.84,
+  "hallucinated_features": [],
+  "confidence": 0.74,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/public/admin/index.html",
+    "frontend/README.md",
     "frontend/src/App.tsx",
+    "frontend/src/components/RewardedAdStubModal.tsx",
+    "frontend/src/hooks/useAppAdMobConfig.ts",
+    "frontend/src/hooks/useAppMetrics.ts",
     "frontend/src/pages/AdminPanelPage.tsx",
+    "frontend/src/pages/ContactUsPage.tsx",
+    "frontend/src/pages/PrivacyPolicyPage.tsx",
     "project_state.json"
   ]
 }

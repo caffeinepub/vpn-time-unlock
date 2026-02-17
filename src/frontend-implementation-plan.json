@@ -1,42 +1,157 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix production /admin deep-link black screen and harden Admin Dashboard rendering",
+  "title": "VPN Super Pro: public AdMob config + logo usage, admin metrics, contact/privacy wiring, and release APK guidance",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add static-hosting-safe deep-link support for /admin and normalize client routing so /admin, /admin/, and /admin/index.html all render the SPA Admin Panel.",
+      "summary": "Use the AdMob configuration saved in Admin Panel in the end-user rewarded-ad flow with safe fallback to local defaults.",
       "acceptanceCriteria": [
-        "Opening https://vpn-time-unlock.caffeine.xyz/admin in a fresh browser session loads the app UI (no platform placeholder/black screen).",
-        "Refreshing the page while on /admin continues to load the app and shows the Admin Panel route (not a 404/placeholder).",
-        "Navigation to /admin via the in-app button still works (History API navigation remains functional)."
+        "Backend provides a non-admin-readable query that returns the saved AdMob config (or null/empty when not set) without trapping for non-admin callers.",
+        "Frontend rewarded-ad flow uses the saved AdMob config for all users when available; if not available, it falls back to the values in frontend/src/config/admob.ts without breaking the UI.",
+        "Non-admin users do not see authorization/trap errors related to reading AdMob configuration during normal app usage."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/admin/index.html",
-          "operation": "create",
-          "description": "Create a dedicated static entry HTML under /admin/ that bootstraps the same React SPA bundle as the root entry, so static hosts can serve the app when deep-linking to /admin without requiring server rewrites."
+          "path": "frontend/src/hooks/useAppAdMobConfig.ts",
+          "operation": "modify",
+          "description": "Refactor hooks to support both admin-only config reads (existing) and a new public read path that calls the backend capability for non-admin users (e.g., actor.getAppAdMobConfigPublic). Ensure the public query is enabled for any available actor and never depends on admin checks. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/RewardedAdStubModal.tsx",
           "operation": "modify",
-          "description": "Harden pathname-based routing by normalizing admin paths so the Admin Panel renders for /admin, /admin/, and /admin/index.html (e.g., treat any path that begins with /admin as the admin route), while keeping existing History API navigation behavior intact."
+          "description": "Update the rewarded-ad UI to fetch AdMob IDs via the new public AdMob-config read hook, and fall back to values from frontend/src/config/admob.ts when no saved config exists. Ensure the modal does not trigger admin-only queries for normal users. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Ensure the Admin Panel reliably renders AdMob Settings and Users & Sessions Overview for admins, with explicit non-blank error states and retry affordances for all admin queries.",
+      "summary": "Show the admin-uploaded app logo consistently in the app header for all users, with a clear fallback icon.",
       "acceptanceCriteria": [
-        "When logged in as an admin, the Admin Panel page visibly shows an “AdMob Settings” section with the two inputs and a working Save action.",
-        "When logged in as an admin, the Admin Panel page visibly shows a “Users & Sessions Overview” section with a table (or an explicit empty-state message when there is no data).",
-        "If admin status/overview/AdMob config queries error, the Admin Panel shows a readable error message in the page (not a blank screen), including a retry affordance (button or reload guidance)."
+        "When a logo exists in the backend, the main app header displays it for authenticated and unauthenticated users.",
+        "When no logo exists, the app displays the existing fallback icon without layout breakage."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure the header always renders the backend-provided logo (via useGetLogo) for both authenticated and unauthenticated users, using ExternalBlob.getDirectURL() when available, and reliably falls back to the existing Shield icon without layout shift. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useAppLogo.ts",
+          "operation": "modify",
+          "description": "Confirm the logo query remains enabled for any available actor (including anonymous/guest) and gracefully handles null logo responses without surfacing auth-related errors in the UI. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Complete Admin Dashboard metrics (live users, total installs) and keep block/unblock UX accurate, including blocked-user VPN panel state.",
+      "acceptanceCriteria": [
+        "Admin dashboard shows a 'Live Users' metric derived from currently active sessions (time-based).",
+        "Backend persists a 'total installs' (or equivalent unique install count) metric and exposes it via an admin-only overview endpoint.",
+        "Frontend Admin Panel displays 'Total Installs' as a separate metric from total registered user count (even if they are equal initially, the fields must be distinct and backed by backend data).",
+        "Admin can block and unblock users from the Admin Panel, and the blocked status is reflected in the UI for each user row.",
+        "A blocked user is prevented from unlocking/using VPN sessions and receives a clear error/state in the VPN panel."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a one-time-per-install client-side call to the backend capability that increments installs (actor.incrementInstalls) using localStorage (or equivalent) to avoid double-counting on reload; do not require authentication for this increment. Keep routing and UI behavior unchanged for normal navigation. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useAdminPanel.ts",
+          "operation": "modify",
+          "description": "Add an admin-only query hook to fetch app-wide metrics (e.g., actor.getAppMetrics) for the Admin Panel, gated by isAdmin like the existing admin overview hook. Verify the component's usage instructions before implementing."
+        },
+        {
           "path": "frontend/src/pages/AdminPanelPage.tsx",
           "operation": "modify",
-          "description": "Add explicit in-page error handling for admin status, AdMob config, and overview loading (use the existing react-query hook states like isError/error and refetch), ensuring failures render readable alerts and a retry action instead of falling through to blank/incorrect states. Keep the existing AdMob Settings (App ID + Rewarded Ad Unit ID with Save) and Users & Sessions Overview sections visible for admins when data is available. Use the authorization component’s role-based access control via existing admin-check hooks to gate content appropriately. Verify the component's usage instructions before implementing."
+          "description": "Render a distinct 'Total Installs' metric sourced from the backend metrics hook (not derived from user count). Keep 'Active Users/Live Users' derived from session timestamps as currently implemented. Ensure the user table continues to reflect UserStatus and block/unblock actions clearly. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/VpnSessionPanel.tsx",
+          "operation": "modify",
+          "description": "Verify and harden the blocked-user UX: ensure the primary unlock CTAs never open the rewarded-ad modal when blocked, and the blocked state is clearly communicated. Keep all user-facing text in English. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add a Contact Us page with a mailto link to the support email and wire it into the main app navigation.",
+      "acceptanceCriteria": [
+        "A new route/page exists for 'Contact Us' and is accessible from the main app navigation (e.g., footer link).",
+        "The Contact Us page displays the support email and includes a working mailto link to Muhammadramadan121555@gmail.com.",
+        "All user-facing text on the Contact Us page is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ContactUsPage.tsx",
+          "operation": "create",
+          "description": "Create a Contact Us page that displays the support email from frontend/src/config/support.ts and includes a mailto link to that email, with all content in English. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add routing for '/contact-us' and ensure it is accessible without authentication (similar to existing privacy/terms routes). Add a footer navigation link/button to 'Contact Us'. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Ensure a complete, professional Privacy Policy page is accessible from the UI and uses the configured support email.",
+      "acceptanceCriteria": [
+        "Privacy Policy page is reachable from the app UI and loads without authentication errors.",
+        "Privacy Policy page includes a clear 'Contact Us' section that uses the support email from frontend/src/config/support.ts.",
+        "All user-facing text on the Privacy Policy page is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/PrivacyPolicyPage.tsx",
+          "operation": "modify",
+          "description": "Confirm the Privacy Policy includes a clear Contact section wired to SUPPORT_EMAIL from frontend/src/config/support.ts and that all user-facing text remains English and professional. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure Privacy Policy remains reachable via footer navigation and remains outside AuthGate so it loads without authentication. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Make the rewarded-ad experience open reliably from the locked VPN state and use saved AdMob IDs when available.",
+      "acceptanceCriteria": [
+        "From the locked VPN state, the primary CTA reliably opens the ad experience without errors.",
+        "The ad experience displays/uses the saved AdMob App ID and rewarded ad unit ID (when configured), otherwise falls back to placeholders.",
+        "No admin-only API calls are required for normal (non-admin) users to reach the ad experience flow."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VpnSessionPanel.tsx",
+          "operation": "modify",
+          "description": "Harden the locked/expired VPN CTA flow so 'Watch Ad to Unlock/Reconnect' reliably opens the rewarded-ad modal whenever the user is not blocked, and does not depend on admin status. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/RewardedAdStubModal.tsx",
+          "operation": "modify",
+          "description": "Ensure the rewarded-ad modal displays and uses the public AdMob config when present, otherwise falls back to frontend/src/config/admob.ts; keep the modal stable even when config is loading or absent. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Document how to produce and share the release Android APK artifact for VPN Super Pro in the build environment.",
+      "acceptanceCriteria": [
+        "A release APK is produced for the current app version.",
+        "A direct download URL for the APK is returned/recorded as the build artifact link for sharing."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/README.md",
+          "operation": "modify",
+          "description": "Add a 'Release APK' section documenting the exact build command(s) and expected output location/link capture process used by the build environment for producing a release APK and obtaining a direct download URL for sharing (manual WhatsApp sharing). Keep instructions in English and aligned with existing project scripts. Verify the component's usage instructions before implementing."
         }
       ]
     }
