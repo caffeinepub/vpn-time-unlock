@@ -1,113 +1,67 @@
 {
   "kind": "build_request",
-  "title": "Activate /admin Admin Panel with AdMob settings, logo update, and user management",
+  "title": "Fix production /admin route black screen and ensure Admin Dashboard loads",
   "projectName": "VPN Time Unlock",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
+      "text": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Please activate the Admin Panel UI at /admin so I can see the settings to enter my AdMob IDs, update the Logo, and manage users. Show me these fields now."
+          "when I open vpn-time-unlock.caffeine.xyz/admin, it still shows a black screen saying 'Publish or restore your app'. The Admin Dashboard is not loading. Please fix the Admin Panel UI immediately"
         ]
       },
       "acceptanceCriteria": [
-        "When an authenticated admin navigates directly to /admin, the Admin Panel page renders (no manual #/admin hash required).",
-        "When an admin clicks the header navigation toggle, the URL switches between / and /admin and the correct panel renders.",
-        "Non-admin users visiting /admin see the existing Access Denied UI."
+        "Opening https://vpn-time-unlock.caffeine.xyz/admin in a fresh browser session loads the app UI (no platform placeholder/black screen).",
+        "Refreshing the page while on /admin continues to load the app and shows the Admin Panel route (not a 404/placeholder).",
+        "Navigation to /admin via the in-app button still works (History API navigation remains functional)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
+      "text": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Show me these fields now."
+          "so I can see the AdMob settings and User Stats"
         ]
       },
       "acceptanceCriteria": [
-        "As an admin, the Admin Panel shows inputs labeled “AdMob App ID” and “Rewarded Ad Unit ID”.",
-        "On first load, if values exist in the backend, the inputs are pre-filled with those values; if not, inputs are empty.",
-        "Clicking “Save” persists the trimmed values and shows an English success toast; backend errors show an English error toast.",
-        "The page does not spam React warnings/errors about setting state during render."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "update the Logo"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin Panel contains a “Logo” (or “Branding”) section with a file picker and a clear Save/Update action.",
-        "Uploaded logo is persisted in the backend and remains available after refresh/relogin.",
-        "App header displays the uploaded logo (with reasonable sizing/cropping) when present; otherwise it falls back to the current default icon.",
-        "Only admins can upload/replace the logo; non-admin calls are rejected."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "manage users"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes an admin-only method to fetch an overview of known users including: principal, optional profile (name), and whether a session exists (and expiry if available).",
-        "Admin Panel “Users & Sessions Overview” section displays a table/list of users showing principal, name (if set), and session status.",
-        "The user overview loads only for admins and shows an English loading state and an English empty-state when there are no users.",
-        "Non-admin callers cannot access the overview API (traps/returns an authorization error)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Persist new/updated admin settings across upgrades: store global AdMob config and the uploaded logo in stable state, and add/adjust conditional migration logic as needed to preserve existing values on upgrade.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "My app is now live. Please activate the Admin Panel UI at /admin so I can see the settings to enter my AdMob IDs, update the Logo, and manage users. Show me these fields now."
-        ]
-      },
-      "acceptanceCriteria": [
-        "After redeploy/upgrade, previously saved AdMob App ID + Rewarded Ad Unit ID values are still returned by getAppAdMobConfig().",
-        "After redeploy/upgrade, previously uploaded logo is still returned/displayed.",
-        "If migration is required, it is implemented using backend/migration.mo per the project’s conditional migration policy."
+        "When logged in as an admin, the Admin Panel page visibly shows an “AdMob Settings” section with the two inputs and a working Save action.",
+        "When logged in as an admin, the Admin Panel page visibly shows a “Users & Sessions Overview” section with a table (or an explicit empty-state message when there is no data).",
+        "If admin status/overview/AdMob config queries error, the Admin Panel shows a readable error message in the page (not a blank screen), including a retry affordance (button or reload guidance)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (Shadcn components are read-only).",
-    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx."
+    "Do not modify files under frontend/src/components/ui (compose existing UI components instead).",
+    "Do not modify immutable hook files listed in the SYSTEM_CONTEXT (implement fixes in other frontend files such as pages/components/assets)."
   ],
   "nonGoals": [
-    "Integrating real Google AdMob ads into a native mobile client (this project remains a web prototype for ad flow).",
-    "Adding third-party authentication providers beyond Internet Identity."
+    "Implementing real Google AdMob SDK integration (native mobile) beyond storing/displaying IDs.",
+    "Adding new authentication providers beyond Internet Identity.",
+    "Adding real-time updates (websockets) for user stats."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

@@ -1,31 +1,31 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T05:54:41.255Z",
+  "generatedAt": "2026-02-17T06:22:12.371Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 4,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
+        "summary": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/README.md"
+          "frontend/public/admin/index.html",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/README.md"
+          "frontend/public/admin/index.html",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
+        "summary": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/pages/AdminPanelPage.tsx"
@@ -33,62 +33,16 @@
         "matchedFiles": [
           "frontend/src/pages/AdminPanelPage.tsx"
         ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useAppLogo.ts",
-          "frontend/src/pages/AdminPanelPage.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useAppLogo.ts",
-          "frontend/src/pages/AdminPanelPage.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useAdminPanel.ts",
-          "frontend/src/pages/AdminPanelPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useAdminPanel.ts",
-          "frontend/src/pages/AdminPanelPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Persist new/updated admin settings across upgrades: store global AdMob config and the uploaded logo in stable state, and add/adjust conditional migration logic as needed to preserve existing values on upgrade.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
-    "backend/blob-storage/Mixin.mo",
-    "backend/blob-storage/Storage.mo",
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/README.md",
+    "frontend/public/admin/index.html",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useAdminPanel.ts",
-    "frontend/src/hooks/useAppLogo.ts",
     "frontend/src/pages/AdminPanelPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",

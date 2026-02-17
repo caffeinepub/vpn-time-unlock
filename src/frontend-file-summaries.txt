@@ -1,5 +1,5 @@
 {
-  "frontend/src/App.tsx": "Main application component with pathname-based routing using History API, conditional admin panel navigation, logo display in header with fallback to Shield icon, and Toaster for notifications.",
+  "frontend/src/App.tsx": "Main application component with pathname-based routing using History API, normalizes admin paths (/admin, /admin/, /admin/index.html) to handle deep-linking, conditional admin panel navigation, logo display in header with fallback to Shield icon, and Toaster for notifications.",
   "frontend/src/components/AuthGate.tsx": "Authentication wrapper that requires Internet Identity login and handles first-time user profile setup before showing protected content.",
   "frontend/src/components/LoginButton.tsx": "Login/logout button component using Internet Identity with proper state management and query cache clearing.",
   "frontend/src/components/VpnSessionPanel.tsx": "Core VPN session UI displaying three states (locked, active with countdown, expired) with unlock and disconnect actions.",
@@ -13,9 +13,10 @@
   "frontend/src/index.css": "Global styles with warm emerald/teal theme using OKLCH color system for light and dark modes.",
   "frontend/tailwind.config.js": "Tailwind configuration with extended theme supporting the emerald/teal VPN security aesthetic.",
   "frontend/README.md": "Comprehensive documentation covering local setup, admin access with caffeineAdminToken flow, admin panel features (AdMob, logo, users), and production deployment guidance including SPA routing requirements.",
-  "frontend/src/pages/AdminPanelPage.tsx": "Complete admin panel page with AdMob settings (App ID and Rewarded Ad Unit ID inputs), logo upload/preview functionality with progress tracking, and users/sessions overview table displaying principals, names, and session status.",
+  "frontend/src/pages/AdminPanelPage.tsx": "Complete admin panel page with explicit error handling and retry affordances for all queries (admin status, AdMob config, user overview), AdMob settings (App ID and Rewarded Ad Unit ID inputs with save action), logo upload/preview functionality with progress tracking, and users/sessions overview table displaying principals, names, and session status with empty state messaging.",
   "frontend/src/hooks/useAdminPanel.ts": "React Query hooks for checking admin status and fetching user overview data (principals, profiles, sessions) from the backend's getUserOverview method.",
   "frontend/src/backend.d.ts": "TypeScript interface definitions for backend canister with existing methods; removed AdminUserOverview type until backend implements getAdminOverview method.",
   "frontend/src/hooks/useAppAdMobConfig.ts": "React Query hooks for fetching and saving global AdMob configuration (App ID and Rewarded Ad Unit ID) with proper cache invalidation.",
-  "frontend/src/hooks/useAppLogo.ts": "React Query hooks for fetching the current app logo and uploading new logos using ExternalBlob with upload progress tracking."
+  "frontend/src/hooks/useAppLogo.ts": "React Query hooks for fetching the current app logo and uploading new logos using ExternalBlob with upload progress tracking.",
+  "frontend/public/admin/index.html": "Static HTML entry point for deep-linking to /admin route, loads the same React SPA bundle as the root index.html to enable direct navigation to the admin panel."
 }

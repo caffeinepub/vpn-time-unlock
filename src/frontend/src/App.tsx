@@ -27,7 +27,9 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const isAdminRoute = currentPath === '/admin';
+  // Normalize admin paths: /admin, /admin/, /admin/index.html all map to admin route
+  const normalizedPath = currentPath.replace(/\/+$/, ''); // Remove trailing slashes
+  const isAdminRoute = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/');
 
   const handleNavigate = (path: string) => {
     window.history.pushState({}, '', path);

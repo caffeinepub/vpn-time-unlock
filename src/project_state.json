@@ -1,42 +1,28 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Live app needing an Admin Panel UI at /admin for AdMob configuration, logo updates, and user management.",
+  "summary": "New project",
   "architectural_notes": [
-    "Provide an Admin Dashboard route at /admin for app settings and user management."
+    "Admin Panel is accessed via https://vpn-time-unlock.caffeine.xyz/admin; must correctly serve the Admin Dashboard UI after publishing."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Admin Dashboard fails to load at /admin after publishing Version 4; shows black screen with 'Publish or restore your app'."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-make-the-admin-panel-accessible-at-the-path-admin-not-only-via-hash-routing-so-that-visiting-https-app-domain-admin-loads-the-admin-panel-ui-and-the-in-app-admin-panel-navigation-button-uses-admin",
-      "title": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
+      "id": "feature-fix-production-deep-link-routing-so-visiting-https-vpn-time-unlock-caffeine-xyz-admin-loads-the-react-spa-and-renders-the-admin-panel-instead-of-a-black-screen-saying-publish-or-restore-your-app-implement-a-static-hosting-safe-solution-that-does-not-rely-on-server-rewrites-e-g-provide-an-admin-entry-html-that-bootstraps-the-same-app",
+      "title": "Fix production deep-link routing so visiting https://vpn-time-unlock.caffeine.xyz/admin loads the React SPA and renders the Admin Panel (instead of a black screen saying “Publish or restore your app”). Implement a static hosting-safe solution that does not rely on server rewrites (e.g., provide an /admin entry HTML that bootstraps the same app).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-the-admin-panel-admob-settings-section-always-renders-for-admins-and-correctly-loads-saves-the-admob-app-id-and-rewarded-ad-unit-id-using-the-backend-apis-with-stable-form-state-initialization-no-state-updates-during-render",
-      "title": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
+      "id": "feature-ensure-the-admin-panel-dashboard-ui-renders-and-exposes-the-two-requested-sections-for-authenticated-admins-1-admob-settings-app-id-rewarded-ad-unit-id-with-save-and-2-user-stats-users-sessions-overview-table-add-a-clear-in-ui-error-state-if-any-of-the-admin-queries-fail-so-the-page-never-appears-as-a-blank-black-screen",
+      "title": "Ensure the Admin Panel dashboard UI renders and exposes the two requested sections for authenticated admins: (1) AdMob Settings (App ID + Rewarded Ad Unit ID with save) and (2) User Stats (users & sessions overview table). Add a clear in-UI error state if any of the admin queries fail so the page never appears as a blank/black screen.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-admin-configurable-app-logo-management-provide-admin-panel-ui-to-upload-replace-a-logo-image-persist-it-in-the-backend-and-display-the-saved-logo-in-the-app-header-in-place-of-the-default-icon-when-available",
-      "title": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-real-user-management-overview-in-the-admin-panel-add-backend-admin-only-apis-to-list-users-and-their-stored-profiles-and-session-status-and-update-the-admin-panel-to-display-this-list-replacing-the-current-placeholder",
-      "title": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -44,19 +30,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Activate Admin Panel UI at /admin with fields for AdMob App ID, Rewarded Ad Unit ID, Logo upload, and user management",
+      "summary": "Admin Dashboard should load at /admin and show AdMob settings and User Stats",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Persist new/updated admin settings across upgrades: store global AdMob config and the uploaded logo in stable state, and add/adjust conditional migration logic as needed to preserve existing values on upgrade.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "status": "pending"
+      "status": "blocked"
     }
   ],
+  "gameProjectType": "none",
   "projectName": "VPN Time Unlock",
   "clarification_mode": "instant",
   "clarification_rounds": 0

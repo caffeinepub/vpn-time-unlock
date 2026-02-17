@@ -1,92 +1,42 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "VPN Time Unlock: Enable /admin path routing and complete Admin Panel (AdMob, Logo, Users)",
+  "title": "Fix production /admin deep-link black screen and harden Admin Dashboard rendering",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Replace hash routing with pathname-based /admin routing and update admin navigation toggle to use /admin.",
+      "summary": "Add static-hosting-safe deep-link support for /admin and normalize client routing so /admin, /admin/, and /admin/index.html all render the SPA Admin Panel.",
       "acceptanceCriteria": [
-        "When an authenticated admin navigates directly to /admin, the Admin Panel page renders (no manual #/admin hash required).",
-        "When an admin clicks the header navigation toggle, the URL switches between / and /admin and the correct panel renders.",
-        "Non-admin users visiting /admin see the existing Access Denied UI."
+        "Opening https://vpn-time-unlock.caffeine.xyz/admin in a fresh browser session loads the app UI (no platform placeholder/black screen).",
+        "Refreshing the page while on /admin continues to load the app and shows the Admin Panel route (not a 404/placeholder).",
+        "Navigation to /admin via the in-app button still works (History API navigation remains functional)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Switch admin routing logic from window.location.hash to window.location.pathname using the History API (pushState/replaceState + popstate listener) so /admin renders AdminPanelPage and / renders VpnSessionPanel; keep admin toggle button navigating between / and /admin; preserve AccessDenied behavior by continuing to rely on AdminPanelPage’s existing admin check."
+          "path": "frontend/public/admin/index.html",
+          "operation": "create",
+          "description": "Create a dedicated static entry HTML under /admin/ that bootstraps the same React SPA bundle as the root entry, so static hosts can serve the app when deep-linking to /admin without requiring server rewrites."
         },
         {
-          "path": "frontend/README.md",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update documentation to reference /admin (not #/admin) as the Admin Panel URL; add a note that production hosting must serve the SPA entry HTML for /admin path refreshes (rewrite to index.html)."
+          "description": "Harden pathname-based routing by normalizing admin paths so the Admin Panel renders for /admin, /admin/, and /admin/index.html (e.g., treat any path that begins with /admin as the admin route), while keeping existing History API navigation behavior intact."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Ensure Admin Panel AdMob Settings renders for admins and uses stable effect-based form initialization while loading/saving via backend hooks.",
+      "summary": "Ensure the Admin Panel reliably renders AdMob Settings and Users & Sessions Overview for admins, with explicit non-blank error states and retry affordances for all admin queries.",
       "acceptanceCriteria": [
-        "As an admin, the Admin Panel shows inputs labeled “AdMob App ID” and “Rewarded Ad Unit ID”.",
-        "On first load, if values exist in the backend, the inputs are pre-filled with those values; if not, inputs are empty.",
-        "Clicking “Save” persists the trimmed values and shows an English success toast; backend errors show an English error toast.",
-        "The page does not spam React warnings/errors about setting state during render."
+        "When logged in as an admin, the Admin Panel page visibly shows an “AdMob Settings” section with the two inputs and a working Save action.",
+        "When logged in as an admin, the Admin Panel page visibly shows a “Users & Sessions Overview” section with a table (or an explicit empty-state message when there is no data).",
+        "If admin status/overview/AdMob config queries error, the Admin Panel shows a readable error message in the page (not a blank screen), including a retry affordance (button or reload guidance)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/AdminPanelPage.tsx",
           "operation": "modify",
-          "description": "Remove any state updates during render for AdMob form initialization; initialize appId/rewardedAdUnitId from useGetAppAdMobConfig() via useEffect with a one-time/dirty-state guard so existing backend values prefill once and subsequent user edits are preserved; keep the AdMob Settings section always visible for admins and keep Save behavior trimming values and toasting success/error in English."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add Admin Panel logo upload/update UI and display the saved logo in the app header when available.",
-      "acceptanceCriteria": [
-        "Admin Panel contains a “Logo” (or “Branding”) section with a file picker and a clear Save/Update action.",
-        "Uploaded logo is persisted in the backend and remains available after refresh/relogin.",
-        "App header displays the uploaded logo (with reasonable sizing/cropping) when present; otherwise it falls back to the current default icon.",
-        "Only admins can upload/replace the logo; non-admin calls are rejected."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useAppLogo.ts",
-          "operation": "create",
-          "description": "Create React Query hooks to load the current logo (getLogo) and upload a new one (uploadLogo) via the backend actor; use the blob-storage component’s ExternalBlob on the frontend to represent the uploaded image and obtain a direct URL for preview/display. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/AdminPanelPage.tsx",
-          "operation": "modify",
-          "description": "Add a “Logo/Branding” card for admins with: (1) current logo preview (if present), (2) file picker (image/*), (3) Save/Update button with upload progress/disabled states; convert selected file bytes to ExternalBlob and call uploadLogo, then show English success/error toasts and refresh cached logo data. Use the blob-storage component (ExternalBlob.fromBytes, optional withUploadProgress) for uploads. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Load and render the saved app logo in the header when available (using the logo’s ExternalBlob direct URL), falling back to the existing default Shield icon otherwise; ensure reasonable sizing/cropping (e.g., constrained square container). Use the blob-storage component capability of direct URL access for rendering. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Replace the Admin Panel placeholder with a real Users & Sessions overview UI powered by backend user overview data.",
-      "acceptanceCriteria": [
-        "Backend exposes an admin-only method to fetch an overview of known users including: principal, optional profile (name), and whether a session exists (and expiry if available).",
-        "Admin Panel “Users & Sessions Overview” section displays a table/list of users showing principal, name (if set), and session status.",
-        "The user overview loads only for admins and shows an English loading state and an English empty-state when there are no users.",
-        "Non-admin callers cannot access the overview API (traps/returns an authorization error)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useAdminPanel.ts",
-          "operation": "modify",
-          "description": "Replace the placeholder overview hook with a real admin-only query that calls the backend actor’s getUserOverview() (enabled only when actor is ready and isAdmin is true); normalize returned data into a frontend-friendly list (principal, optional name, session existence + expiry when available) and ensure authorization errors surface cleanly to the UI."
-        },
-        {
-          "path": "frontend/src/pages/AdminPanelPage.tsx",
-          "operation": "modify",
-          "description": "Replace the Users & Sessions Overview placeholder card with a real table/list view driven by the updated admin overview hook; show English loading state while fetching, English empty state when no users exist, and render rows with principal, optional profile name, and session status (including expiry when present). Handle backend authorization errors by showing an English error toast/message while keeping non-admins gated by the existing Access Denied UI."
+          "description": "Add explicit in-page error handling for admin status, AdMob config, and overview loading (use the existing react-query hook states like isError/error and refetch), ensuring failures render readable alerts and a retry action instead of falling through to blank/incorrect states. Keep the existing AdMob Settings (App ID + Rewarded Ad Unit ID with Save) and Users & Sessions Overview sections visible for admins when data is available. Use the authorization component’s role-based access control via existing admin-check hooks to gate content appropriately. Verify the component's usage instructions before implementing."
         }
       ]
     }

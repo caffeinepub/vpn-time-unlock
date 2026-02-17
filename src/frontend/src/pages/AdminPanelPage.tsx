@@ -9,16 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone, Image as ImageIcon, Upload } from 'lucide-react';
+import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone, Image as ImageIcon, Upload, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { ExternalBlob } from '../backend';
 
 export default function AdminPanelPage() {
   const { identity } = useInternetIdentity();
-  const { data: isAdmin, isLoading: isAdminLoading } = useIsCurrentPrincipalAdmin();
-  const { data: overview, isLoading: overviewLoading } = useGetAdminOverview();
-  const { data: adMobConfig, isLoading: adMobConfigLoading } = useGetAppAdMobConfig();
+  const { data: isAdmin, isLoading: isAdminLoading, isError: isAdminError, error: adminError, refetch: refetchAdminStatus } = useIsCurrentPrincipalAdmin();
+  const { data: overview, isLoading: overviewLoading, isError: overviewError, error: overviewErrorObj, refetch: refetchOverview } = useGetAdminOverview();
+  const { data: adMobConfig, isLoading: adMobConfigLoading, isError: adMobConfigError, error: adMobConfigErrorObj, refetch: refetchAdMobConfig } = useGetAppAdMobConfig();
   const { data: currentLogo, isLoading: logoLoading } = useGetLogo();
   const setAdMobConfig = useSetAppAdMobConfig();
   const uploadLogo = useUploadLogo();
@@ -32,7 +32,7 @@ export default function AdminPanelPage() {
 
   const callerPrincipal = identity?.getPrincipal().toString() || 'Not authenticated';
 
-  // Initialize AdMob form fields when config loads (using useEffect to avoid state updates during render)
+  // Initialize AdMob form fields when config loads
   useEffect(() => {
     if (adMobConfig && !hasInitializedAdMob) {
       setAppId(adMobConfig.appId);
@@ -100,6 +100,38 @@ export default function AdminPanelPage() {
       setUploadProgress(0);
     }
   };
+
+  // Error state for admin status check
+  if (isAdminError) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+              <div>
+                <CardTitle className="text-2xl">Error Loading Admin Panel</CardTitle>
+                <CardDescription>Failed to verify admin status</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Connection Error</AlertTitle>
+              <AlertDescription>
+                {adminError?.message || 'Unable to connect to the backend. Please check your connection and try again.'}
+              </AlertDescription>
+            </Alert>
+            <Button onClick={() => refetchAdminStatus()} variant="outline" className="w-full">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Loading state
   if (isAdminLoading) {
@@ -292,7 +324,21 @@ export default function AdminPanelPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {adMobConfigLoading ? (
+          {adMobConfigError ? (
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading AdMob Configuration</AlertTitle>
+                <AlertDescription>
+                  {adMobConfigErrorObj?.message || 'Failed to load AdMob settings. Please try again.'}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => refetchAdMobConfig()} variant="outline" className="w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Loading AdMob Config
+              </Button>
+            </div>
+          ) : adMobConfigLoading ? (
             <div className="py-8 flex flex-col items-center justify-center gap-4">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Loading AdMob configuration...</p>
@@ -351,26 +397,18 @@ export default function AdminPanelPage() {
                 </Button>
                 {adMobConfig && (
                   <p className="text-xs text-muted-foreground">
-                    Last saved configuration is active
+                    Configuration saved and active
                   </p>
                 )}
               </div>
 
               <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Important</AlertTitle>
-                <AlertDescription>
-                  These settings control the AdMob integration for your app. Make sure to use your actual
-                  AdMob IDs from the{' '}
-                  <a
-                    href="https://admob.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-primary"
-                  >
-                    AdMob console
-                  </a>
-                  . The web prototype simulates ads; real integration requires native Android implementation.
+                <AlertTitle>Production Setup Required</AlertTitle>
+                <AlertDescription className="text-xs">
+                  These IDs are displayed in the simulated ad modal. For production Android apps,
+                  integrate the Google Mobile Ads SDK following the documentation in{' '}
+                  <code className="text-xs bg-muted px-1 py-0.5 rounded">frontend/src/config/admob.ts</code>
                 </AlertDescription>
               </Alert>
             </div>
@@ -385,102 +423,82 @@ export default function AdminPanelPage() {
             <Users className="w-6 h-6 text-primary" />
             <div>
               <CardTitle>Users & Sessions Overview</CardTitle>
-              <CardDescription>All registered users and their active sessions</CardDescription>
+              <CardDescription>View all registered users and their session status</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {overviewLoading ? (
+          {overviewError ? (
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading User Overview</AlertTitle>
+                <AlertDescription>
+                  {overviewErrorObj?.message || 'Failed to load user data. Please try again.'}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => refetchOverview()} variant="outline" className="w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Loading Users
+              </Button>
+            </div>
+          ) : overviewLoading ? (
             <div className="py-8 flex flex-col items-center justify-center gap-4">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Loading user overview...</p>
             </div>
-          ) : overview && (overview.userProfiles.length > 0 || overview.sessions.length > 0) ? (
-            <div className="space-y-6">
-              {/* Users Table */}
-              {overview.userProfiles.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Registered Users</h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Principal</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Session Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {overview.userProfiles.map(([principal, profile]) => {
-                          const session = overview.sessions.find(([p]) => p.toString() === principal.toString());
-                          const hasSession = !!session;
-                          const isActive = hasSession && session[1].unlockExpiresAt > BigInt(Date.now() * 1_000_000);
-                          
-                          return (
-                            <TableRow key={principal.toString()}>
-                              <TableCell className="font-mono text-xs">{principal.toString()}</TableCell>
-                              <TableCell>{profile.name}</TableCell>
-                              <TableCell>
-                                {hasSession ? (
-                                  <Badge variant={isActive ? 'default' : 'secondary'}>
-                                    {isActive ? 'Active' : 'Expired'}
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline">No Session</Badge>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-              {/* Sessions Table */}
-              {overview.sessions.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Active Sessions</h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Principal</TableHead>
-                          <TableHead>Expires At</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {overview.sessions.map(([principal, session]) => {
-                          const expiresAt = new Date(Number(session.unlockExpiresAt / BigInt(1_000_000)));
-                          const isActive = session.unlockExpiresAt > BigInt(Date.now() * 1_000_000);
-                          
-                          return (
-                            <TableRow key={principal.toString()}>
-                              <TableCell className="font-mono text-xs">{principal.toString()}</TableCell>
-                              <TableCell className="text-sm">{expiresAt.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant={isActive ? 'default' : 'secondary'}>
-                                  {isActive ? 'Active' : 'Expired'}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
+          ) : !overview || (overview.userProfiles.length === 0 && overview.sessions.length === 0) ? (
+            <div className="py-12 text-center">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No users or sessions yet</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Users will appear here once they log in and create profiles
+              </p>
             </div>
           ) : (
-            <div className="py-12 text-center text-muted-foreground">
-              <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="font-medium">No Users Yet</p>
-              <p className="text-sm mt-2">
-                Users will appear here once they log in and create profiles.
-              </p>
+            <div className="space-y-4">
+              <div className="rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Principal ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Session Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {overview.userProfiles.map(([principal, profile]) => {
+                      const session = overview.sessions.find(([p]) => p.toString() === principal.toString());
+                      const hasActiveSession = session && Number(session[1].unlockExpiresAt) > Date.now() * 1_000_000;
+
+                      return (
+                        <TableRow key={principal.toString()}>
+                          <TableCell className="font-mono text-xs max-w-xs truncate">
+                            {principal.toString()}
+                          </TableCell>
+                          <TableCell className="font-medium">{profile.name}</TableCell>
+                          <TableCell>
+                            {hasActiveSession ? (
+                              <Badge variant="default" className="bg-emerald-500">
+                                Active
+                              </Badge>
+                            ) : session ? (
+                              <Badge variant="secondary">Expired</Badge>
+                            ) : (
+                              <Badge variant="outline">No Session</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Total Users: {overview.userProfiles.length}</span>
+                <span>Active Sessions: {overview.sessions.filter(([_, s]) => Number(s.unlockExpiresAt) > Date.now() * 1_000_000).length}</span>
+              </div>
             </div>
           )}
         </CardContent>
