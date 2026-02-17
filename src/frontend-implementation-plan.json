@@ -1,0 +1,50 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Admin Panel: AdMob Settings inputs + React Query save/load wiring",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Render an admin-only “AdMob Settings” section on the Admin Panel with visible, editable inputs for AdMob App ID and Rewarded Ad Unit ID (no longer hidden behind the placeholder).",
+      "acceptanceCriteria": [
+        "As an admin visiting `#/admin`, I can see two labeled text input fields for AdMob App ID and Rewarded Ad Unit ID.",
+        "The AdMob Settings section is visible even if other Admin Overview features remain incomplete.",
+        "Non-admin users still see the existing access denied UI and cannot see these fields."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AdminPanelPage.tsx",
+          "operation": "modify",
+          "description": "Add a new Card/section titled “AdMob Settings” within the admin-only content area (below the Admin Status card and independent of the existing “Feature In Development” placeholder). Render two labeled text inputs: “AdMob App ID” and “Rewarded Ad Unit ID”. Keep the existing non-admin access denied UI unchanged. Use the existing admin gating (via `useIsCurrentPrincipalAdmin`) provided by the authorization component to ensure only admins can see the section; Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Use React Query to load and save global AdMob config (App ID + Rewarded Ad Unit ID) from/to the backend with explicit Save, loading, and success/error UI states in English.",
+      "acceptanceCriteria": [
+        "On opening the Admin Panel as an admin, the inputs are prefilled from backend values (or empty if not set).",
+        "Clicking Save persists the values via the backend and the UI reflects the saved state (including after a refresh).",
+        "While saving, the Save control is disabled and a loading indicator is shown.",
+        "On failure, an English error message is displayed and values are not silently lost."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useAppAdMobConfig.ts",
+          "operation": "create",
+          "description": "Create React Query hooks to (1) fetch the current global AdMob config and (2) persist updates, using the backend actor methods already exposed in the frontend types (`getAppAdMobConfig`, `setAppAdMobConfig`). Ensure queries are disabled until an actor is available (consistent with existing hooks) and mutations invalidate/refetch the config query on success. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AdminPanelPage.tsx",
+          "operation": "modify",
+          "description": "Wire the “AdMob Settings” inputs to the new React Query hooks: load existing values on page load (prefill, or show empty strings if not set), provide an explicit “Save” action that calls the save mutation, disable the Save control and show a loading indicator while saving, and display English success/error status messages (do not silently discard user edits on failure). Keep the AdMob Settings section visible regardless of the other admin placeholder content. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/RewardedAdStubModal.tsx",
+          "operation": "modify",
+          "description": "Update the AdMob configuration info display to prefer showing the persisted admin-configured values when available (falling back to the existing `ADMOB_CONFIG` placeholders if no saved config exists), without changing the simulated ad behavior. This helps verify that saved values are reflected in the UI after refresh. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

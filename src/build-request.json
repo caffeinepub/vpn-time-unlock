@@ -1,0 +1,86 @@
+{
+  "kind": "build_request",
+  "title": "Fix Admin Panel to display and save AdMob App ID + Rewarded Ad Unit ID fields",
+  "projectName": "VPN Time Unlock",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "The build is finished, but I still don't see the input fields in the Admin Panel. Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
+        ]
+      },
+      "acceptanceCriteria": [
+        "As an admin visiting `#/admin`, I can see two labeled text input fields for AdMob App ID and Rewarded Ad Unit ID.",
+        "The AdMob Settings section is visible even if other Admin Overview features remain incomplete.",
+        "Non-admin users still see the existing access denied UI and cannot see these fields."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add backend storage and admin-only read/write APIs for global AdMob configuration values (AdMob App ID and Rewarded Ad Unit ID) in the single Motoko actor, so the Admin Panel can load existing values and persist updates.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes an admin-only query method to fetch the current saved AdMob App ID and Rewarded Ad Unit ID.",
+        "Backend exposes an admin-only update method to set/save the AdMob App ID and Rewarded Ad Unit ID.",
+        "Calls from non-admin principals to these methods trap/are rejected consistently with existing authorization patterns."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
+        ]
+      },
+      "acceptanceCriteria": [
+        "On opening the Admin Panel as an admin, the inputs are prefilled from backend values (or empty if not set).",
+        "Clicking Save persists the values via the backend and the UI reflects the saved state (including after a refresh).",
+        "While saving, the Save control is disabled and a loading indicator is shown.",
+        "On failure, an English error message is displayed and values are not silently lost."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
+    "Do not edit files under `frontend/src/components/ui` or any paths listed as immutable in SYSTEM_CONTEXT.",
+    "Use English for any user-facing text."
+  ],
+  "nonGoals": [
+    "Implementing real Google AdMob SDK integration (native Android) is out of scope for this web prototype.",
+    "Adding or fixing the Admin Overview “Users & Sessions Overview” table is out of scope unless required to render the AdMob settings fields."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

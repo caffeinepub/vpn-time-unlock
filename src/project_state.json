@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Admin Panel enhancements: complete Admin Overview backend and add global AdMob configuration fields (App ID + Rewarded Ad Unit ID) plus custom logo upload, all manageable from the Admin Panel.",
+  "architectural_notes": [
+    "AdMob configuration should be stored as global app settings (single App ID and Rewarded Ad Unit ID for the entire app) editable via Admin Panel."
+  ],
+  "known_issues": [
+    "Admin Panel UI not showing AdMob input fields even after build completion; user requests manual/forced UI update."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-update-the-admin-panel-ui-so-that-when-the-current-principal-is-an-admin-the-page-renders-a-visible-admob-settings-section-with-two-editable-input-fields-admob-app-id-and-rewarded-ad-unit-id-instead-of-only-showing-the-current-feature-in-development-placeholder",
+      "title": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-admin-panel-admob-settings-section-to-the-backend-using-react-query-so-it-loads-current-saved-values-on-page-load-and-provides-an-explicit-save-action-that-persists-changes-and-shows-a-success-error-state-in-english",
+      "title": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Finish backend for Admin Overview in the Admin Panel",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add global AdMob settings in Admin Panel: store and edit AdMob App ID and Rewarded Ad Unit ID",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add custom logo upload in Admin Panel with backend storage and display",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Add backend storage and admin-only read/write APIs for global AdMob configuration values (AdMob App ID and Rewarded Ad Unit ID) in the single Motoko actor, so the Admin Panel can load existing values and persist updates.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "VPN Time Unlock",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,45 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-update-the-admin-panel-ui-so-that-when-the-current-principal-is-an-admin-the-page-renders-a-visible-admob-settings-section-with-two-editable-input-fields-admob-app-id-and-rewarded-ad-unit-id-instead-of-only-showing-the-current-feature-in-development-placeholder",
+      "featureTitle": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "files": [
+        "frontend/src/pages/AdminPanelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-wire-the-admin-panel-admob-settings-section-to-the-backend-using-react-query-so-it-loads-current-saved-values-on-page-load-and-provides-an-explicit-save-action-that-persists-changes-and-shows-a-success-error-state-in-english",
+      "featureTitle": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
+      "files": [
+        "frontend/src/components/RewardedAdStubModal.tsx",
+        "frontend/src/hooks/useAppAdMobConfig.ts",
+        "frontend/src/pages/AdminPanelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

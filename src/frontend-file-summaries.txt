@@ -1,0 +1,20 @@
+{
+  "frontend/src/App.tsx": "Main application component with hash-based routing, conditional admin panel link in header for authenticated admins, route switching between VPN session panel and admin panel, and Toaster component for notifications.",
+  "frontend/src/components/AuthGate.tsx": "Authentication wrapper that requires Internet Identity login and handles first-time user profile setup before showing protected content.",
+  "frontend/src/components/LoginButton.tsx": "Login/logout button component using Internet Identity with proper state management and query cache clearing.",
+  "frontend/src/components/VpnSessionPanel.tsx": "Core VPN session UI displaying three states (locked, active with countdown, expired) with unlock and disconnect actions.",
+  "frontend/src/components/RewardedAdStubModal.tsx": "Simulated 40-second rewarded ad modal that displays admin-configured AdMob IDs when available, falling back to placeholder values.",
+  "frontend/src/config/admob.ts": "AdMob configuration file with placeholder IDs and comprehensive documentation for production Android implementation.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for fetching and saving user profiles with proper cache invalidation.",
+  "frontend/src/hooks/useSessionStatus.ts": "Hook that fetches session status from backend, calculates remaining time, and auto-refreshes while active with corrected query data access.",
+  "frontend/src/hooks/useUnlockSession.ts": "Mutation hook to unlock a new 2-hour VPN session via backend.",
+  "frontend/src/hooks/useDisconnectSession.ts": "Mutation hook to manually disconnect and clear the active session.",
+  "frontend/src/utils/timeFormat.ts": "Utility function to format seconds into HH:MM:SS display format.",
+  "frontend/src/index.css": "Global styles with warm emerald/teal theme using OKLCH color system for light and dark modes.",
+  "frontend/tailwind.config.js": "Tailwind configuration with extended theme supporting the emerald/teal VPN security aesthetic.",
+  "frontend/README.md": "Comprehensive documentation covering local setup, admin access instructions with caffeineAdminToken flow, admin panel features, AdMob configuration, and production deployment guidance.",
+  "frontend/src/pages/AdminPanelPage.tsx": "Admin panel page with visible AdMob Settings section containing editable input fields for App ID and Rewarded Ad Unit ID, with save functionality, loading states, and success/error handling.",
+  "frontend/src/hooks/useAdminPanel.ts": "React Query hooks for admin functionality including checking if current principal is admin; getAdminOverview hook returns empty array as placeholder until backend implements the method.",
+  "frontend/src/backend.d.ts": "TypeScript interface definitions for backend canister with existing methods; removed AdminUserOverview type until backend implements getAdminOverview method.",
+  "frontend/src/hooks/useAppAdMobConfig.ts": "React Query hooks for fetching and saving global AdMob configuration (App ID and Rewarded Ad Unit ID) with proper cache invalidation."
+}
