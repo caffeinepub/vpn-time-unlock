@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-admin-panel-ui-so-that-when-the-current-principal-is-an-admin-the-page-renders-a-visible-admob-settings-section-with-two-editable-input-fields-admob-app-id-and-rewarded-ad-unit-id-instead-of-only-showing-the-current-feature-in-development-placeholder",
-      "featureTitle": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "featureId": "feature-make-the-admin-panel-accessible-at-the-path-admin-not-only-via-hash-routing-so-that-visiting-https-app-domain-admin-loads-the-admin-panel-ui-and-the-in-app-admin-panel-navigation-button-uses-admin",
+      "featureTitle": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
       "files": [
-        "frontend/src/pages/AdminPanelPage.tsx"
+        "frontend/README.md",
+        "frontend/src/App.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -13,7 +14,8 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-1"
@@ -21,11 +23,9 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-wire-the-admin-panel-admob-settings-section-to-the-backend-using-react-query-so-it-loads-current-saved-values-on-page-load-and-provides-an-explicit-save-action-that-persists-changes-and-shows-a-success-error-state-in-english",
-      "featureTitle": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
+      "featureId": "feature-ensure-the-admin-panel-admob-settings-section-always-renders-for-admins-and-correctly-loads-saves-the-admob-app-id-and-rewarded-ad-unit-id-using-the-backend-apis-with-stable-form-state-initialization-no-state-updates-during-render",
+      "featureTitle": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
       "files": [
-        "frontend/src/components/RewardedAdStubModal.tsx",
-        "frontend/src/hooks/useAppAdMobConfig.ts",
         "frontend/src/pages/AdminPanelPage.tsx"
       ],
       "components": [
@@ -34,10 +34,54 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-admin-configurable-app-logo-management-provide-admin-panel-ui-to-upload-replace-a-logo-image-persist-it-in-the-backend-and-display-the-saved-logo-in-the-app-header-in-place-of-the-default-icon-when-available",
+      "featureTitle": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useAppLogo.ts",
+        "frontend/src/pages/AdminPanelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-real-user-management-overview-in-the-admin-panel-add-backend-admin-only-apis-to-list-users-and-their-stored-profiles-and-session-status-and-update-the-admin-panel-to-display-this-list-replacing-the-current-placeholder",
+      "featureTitle": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
+      "files": [
+        "frontend/src/hooks/useAdminPanel.ts",
+        "frontend/src/pages/AdminPanelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

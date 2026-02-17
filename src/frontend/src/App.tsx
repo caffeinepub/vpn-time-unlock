@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useIsCurrentPrincipalAdmin } from './hooks/useAdminPanel';
+import { useGetLogo } from './hooks/useAppLogo';
 import AuthGate from './components/AuthGate';
 import VpnSessionPanel from './components/VpnSessionPanel';
 import AdminPanelPage from './pages/AdminPanelPage';
@@ -10,16 +12,30 @@ import { Toaster } from '@/components/ui/sonner';
 export default function App() {
   const { identity } = useInternetIdentity();
   const { data: isAdmin } = useIsCurrentPrincipalAdmin();
+  const { data: logo } = useGetLogo();
   const isAuthenticated = !!identity;
 
-  // Simple hash-based routing
-  const currentHash = window.location.hash;
-  const isAdminRoute = currentHash === '#/admin';
+  // Pathname-based routing using History API
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const isAdminRoute = currentPath === '/admin';
 
   const handleNavigate = (path: string) => {
-    window.location.hash = path;
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
   };
+
+  // Get logo URL if available
+  const logoUrl = logo?.file?.getDirectURL();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -29,8 +45,16 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <Shield className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 overflow-hidden">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt="App Logo"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Shield className="w-6 h-6 text-white" />
+                )}
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">SecureVPN</h1>
@@ -41,7 +65,7 @@ export default function App() {
             <div className="flex items-center gap-4">
               {isAuthenticated && isAdmin && (
                 <button
-                  onClick={() => handleNavigate(isAdminRoute ? '#/' : '#/admin')}
+                  onClick={() => handleNavigate(isAdminRoute ? '/' : '/admin')}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                 >
                   <Settings className="w-4 h-4" />

@@ -1,33 +1,29 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T04:23:45.007Z",
-  "summary": "Diff adds backend storage + admin-only APIs for AdMob config and introduces frontend React Query hooks and Admin Panel wiring for editing/saving AdMob App ID and Rewarded Ad Unit ID. It also changes unrelated UI behavior (admin navigation button) and uses AdMob config in the rewarded-ad stub modal.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-17T05:54:41.252Z",
+  "summary": "Most requested frontend/admin features appear implemented (pathname-based /admin navigation, AdMob form init via useEffect + save toast, logo upload + header display, migration stub adding logo). However, the diff evidence does not show the required backend admin-only user overview API implementation that the frontend now calls.",
+  "missing_requirements": [
     {
-      "description": "Rewarded Ad stub modal now fetches and displays admin-configured AdMob IDs (fallback to placeholders).",
-      "reason": "BuildRequest only asked to display/edit/save AdMob settings in the Admin Panel; it did not request wiring other parts of the app (rewarded-ad modal) to those settings.",
+      "id": "REQ-4",
+      "requirement": "Backend exposes an admin-only method to fetch an overview of known users including: principal, optional profile (name), and whether a session exists (and expiry if available).",
+      "reason": "Frontend adds a hook that calls `actor.getUserOverview()` and Admin Panel expects overview data, but the backend diff snippet does not show any `getUserOverview` (or equivalent) method being implemented/exposed, nor its admin-only authorization behavior.",
       "evidence": [
-        "frontend/src/components/RewardedAdStubModal.tsx",
-        "frontend/src/hooks/useAppAdMobConfig.ts"
-      ]
-    },
-    {
-      "description": "App header adds an authenticated-admin-only navigation button to toggle between VPN Panel and Admin Panel via hash routing.",
-      "reason": "BuildRequest did not request changes to global navigation/header behavior; scope was limited to Admin Panel fields + backend APIs + React Query wiring.",
-      "evidence": [
-        "frontend/src/App.tsx"
+        "frontend/src/hooks/useAdminPanel.ts",
+        "backend/main.mo (truncated)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "hallucinated_features": [],
+  "confidence": 0.67,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
+    "frontend/README.md",
     "frontend/src/App.tsx",
-    "frontend/src/components/RewardedAdStubModal.tsx",
-    "frontend/src/hooks/useAppAdMobConfig.ts",
+    "frontend/src/hooks/useAdminPanel.ts",
+    "frontend/src/hooks/useAppLogo.ts",
     "frontend/src/pages/AdminPanelPage.tsx",
     "project_state.json"
   ]

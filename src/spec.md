@@ -1,11 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Make the Admin Panel show and persist global AdMob configuration (AdMob App ID and Rewarded Ad Unit ID) for admins.
+**Goal:** Make the Admin Panel fully usable at `/admin` for authenticated admins, including AdMob settings, logo management, and real user/session overview with settings persisted across upgrades.
 
 **Planned changes:**
-- Update the Admin Panel (`#/admin`) to render an “AdMob Settings” section for admin principals with two labeled text inputs: “AdMob App ID” and “Rewarded Ad Unit ID” (replacing the current placeholder for this area).
-- Add admin-only backend storage and APIs in the single Motoko actor to read and update the saved AdMob App ID and Rewarded Ad Unit ID values.
-- Wire the Admin Panel to the backend via React Query: load saved values on page load, provide an explicit Save action, and show English success/error states with disabled Save + loading indicator while saving.
+- Enable route access to the Admin Panel at `/admin` (not hash routing), and update the in-app navigation toggle to switch between `/` and `/admin`.
+- Ensure the Admin Panel “AdMob Settings” section always renders for admins, loads existing values from the backend, and saves trimmed “AdMob App ID” and “Rewarded Ad Unit ID” with English success/error toasts and stable form initialization.
+- Add admin-only logo upload/replace in the Admin Panel, persist the logo in the backend, and display the saved logo in the app header when available (fallback to current default icon otherwise).
+- Replace the current Admin Panel user placeholder with a real “Users & Sessions Overview” backed by a new admin-only backend API returning principal, optional profile name, and session status/expiry (if available), including English loading and empty states.
+- Persist AdMob config and uploaded logo across backend upgrades, adding/adjusting migration logic as needed to preserve existing values.
 
-**User-visible outcome:** Admin users can view, edit, and save the AdMob App ID and Rewarded Ad Unit ID in `#/admin`, with values reloading correctly after refresh; non-admin users continue to see access denied and cannot access these settings.
+**User-visible outcome:** Admins can visit `https://<app-domain>/admin` to manage AdMob IDs, upload/update the app logo, and view a real list of users and session status; non-admins visiting `/admin` see Access Denied, and saved settings/logo remain after redeploys/upgrades.

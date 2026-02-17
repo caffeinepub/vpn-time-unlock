@@ -1,86 +1,113 @@
 {
   "kind": "build_request",
-  "title": "Fix Admin Panel to display and save AdMob App ID + Rewarded Ad Unit ID fields",
+  "title": "Activate /admin Admin Panel with AdMob settings, logo update, and user management",
   "projectName": "VPN Time Unlock",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "text": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "The build is finished, but I still don't see the input fields in the Admin Panel. Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
+          "Please activate the Admin Panel UI at /admin so I can see the settings to enter my AdMob IDs, update the Logo, and manage users. Show me these fields now."
         ]
       },
       "acceptanceCriteria": [
-        "As an admin visiting `#/admin`, I can see two labeled text input fields for AdMob App ID and Rewarded Ad Unit ID.",
-        "The AdMob Settings section is visible even if other Admin Overview features remain incomplete.",
-        "Non-admin users still see the existing access denied UI and cannot see these fields."
+        "When an authenticated admin navigates directly to /admin, the Admin Panel page renders (no manual #/admin hash required).",
+        "When an admin clicks the header navigation toggle, the URL switches between / and /admin and the correct panel renders.",
+        "Non-admin users visiting /admin see the existing Access Denied UI."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend storage and admin-only read/write APIs for global AdMob configuration values (AdMob App ID and Rewarded Ad Unit ID) in the single Motoko actor, so the Admin Panel can load existing values and persist updates.",
+      "text": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Show me these fields now."
+        ]
+      },
+      "acceptanceCriteria": [
+        "As an admin, the Admin Panel shows inputs labeled “AdMob App ID” and “Rewarded Ad Unit ID”.",
+        "On first load, if values exist in the backend, the inputs are pre-filled with those values; if not, inputs are empty.",
+        "Clicking “Save” persists the trimmed values and shows an English success toast; backend errors show an English error toast.",
+        "The page does not spam React warnings/errors about setting state during render."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "update the Logo"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin Panel contains a “Logo” (or “Branding”) section with a file picker and a clear Save/Update action.",
+        "Uploaded logo is persisted in the backend and remains available after refresh/relogin.",
+        "App header displays the uploaded logo (with reasonable sizing/cropping) when present; otherwise it falls back to the current default icon.",
+        "Only admins can upload/replace the logo; non-admin calls are rejected."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "manage users"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes an admin-only method to fetch an overview of known users including: principal, optional profile (name), and whether a session exists (and expiry if available).",
+        "Admin Panel “Users & Sessions Overview” section displays a table/list of users showing principal, name (if set), and session status.",
+        "The user overview loads only for admins and shows an English loading state and an English empty-state when there are no users.",
+        "Non-admin callers cannot access the overview API (traps/returns an authorization error)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Persist new/updated admin settings across upgrades: store global AdMob config and the uploaded logo in stable state, and add/adjust conditional migration logic as needed to preserve existing values on upgrade.",
       "target": "backend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
+          "My app is now live. Please activate the Admin Panel UI at /admin so I can see the settings to enter my AdMob IDs, update the Logo, and manage users. Show me these fields now."
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes an admin-only query method to fetch the current saved AdMob App ID and Rewarded Ad Unit ID.",
-        "Backend exposes an admin-only update method to set/save the AdMob App ID and Rewarded Ad Unit ID.",
-        "Calls from non-admin principals to these methods trap/are rejected consistently with existing authorization patterns."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Please manually force the UI to show the AdMob App ID and Rewarded Ad Unit ID fields right now so I can finish the setup."
-        ]
-      },
-      "acceptanceCriteria": [
-        "On opening the Admin Panel as an admin, the inputs are prefilled from backend values (or empty if not set).",
-        "Clicking Save persists the values via the backend and the UI reflects the saved state (including after a refresh).",
-        "While saving, the Save control is disabled and a loading indicator is shown.",
-        "On failure, an English error message is displayed and values are not silently lost."
+        "After redeploy/upgrade, previously saved AdMob App ID + Rewarded Ad Unit ID values are still returned by getAppAdMobConfig().",
+        "After redeploy/upgrade, previously uploaded logo is still returned/displayed.",
+        "If migration is required, it is implemented using backend/migration.mo per the project’s conditional migration policy."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
-    "Do not edit files under `frontend/src/components/ui` or any paths listed as immutable in SYSTEM_CONTEXT.",
-    "Use English for any user-facing text."
+    "Do not edit files under frontend/src/components/ui (Shadcn components are read-only).",
+    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx."
   ],
   "nonGoals": [
-    "Implementing real Google AdMob SDK integration (native Android) is out of scope for this web prototype.",
-    "Adding or fixing the Admin Overview “Users & Sessions Overview” table is out of scope unless required to render the AdMob settings fields."
+    "Integrating real Google AdMob ads into a native mobile client (this project remains a web prototype for ad flow).",
+    "Adding third-party authentication providers beyond Internet Identity."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

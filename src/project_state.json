@@ -1,28 +1,42 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Admin Panel enhancements: complete Admin Overview backend and add global AdMob configuration fields (App ID + Rewarded Ad Unit ID) plus custom logo upload, all manageable from the Admin Panel.",
+  "summary": "Live app needing an Admin Panel UI at /admin for AdMob configuration, logo updates, and user management.",
   "architectural_notes": [
-    "AdMob configuration should be stored as global app settings (single App ID and Rewarded Ad Unit ID for the entire app) editable via Admin Panel."
+    "Provide an Admin Dashboard route at /admin for app settings and user management."
   ],
-  "known_issues": [
-    "Admin Panel UI not showing AdMob input fields even after build completion; user requests manual/forced UI update."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-admin-panel-ui-so-that-when-the-current-principal-is-an-admin-the-page-renders-a-visible-admob-settings-section-with-two-editable-input-fields-admob-app-id-and-rewarded-ad-unit-id-instead-of-only-showing-the-current-feature-in-development-placeholder",
-      "title": "Update the Admin Panel UI so that, when the current principal is an admin, the page renders a visible “AdMob Settings” section with two editable input fields: “AdMob App ID” and “Rewarded Ad Unit ID”, instead of only showing the current “Feature In Development” placeholder.",
+      "id": "feature-make-the-admin-panel-accessible-at-the-path-admin-not-only-via-hash-routing-so-that-visiting-https-app-domain-admin-loads-the-admin-panel-ui-and-the-in-app-admin-panel-navigation-button-uses-admin",
+      "title": "Make the Admin Panel accessible at the path /admin (not only via hash routing), so that visiting https://<app-domain>/admin loads the Admin Panel UI and the in-app “Admin Panel” navigation button uses /admin.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-wire-the-admin-panel-admob-settings-section-to-the-backend-using-react-query-so-it-loads-current-saved-values-on-page-load-and-provides-an-explicit-save-action-that-persists-changes-and-shows-a-success-error-state-in-english",
-      "title": "Wire the Admin Panel AdMob Settings section to the backend using React Query so it loads current saved values on page load and provides an explicit Save action that persists changes and shows a success/error state in English.",
+      "id": "feature-ensure-the-admin-panel-admob-settings-section-always-renders-for-admins-and-correctly-loads-saves-the-admob-app-id-and-rewarded-ad-unit-id-using-the-backend-apis-with-stable-form-state-initialization-no-state-updates-during-render",
+      "title": "Ensure the Admin Panel “AdMob Settings” section always renders for admins and correctly loads/saves the AdMob App ID and Rewarded Ad Unit ID using the backend APIs, with stable form state initialization (no state updates during render).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-admin-configurable-app-logo-management-provide-admin-panel-ui-to-upload-replace-a-logo-image-persist-it-in-the-backend-and-display-the-saved-logo-in-the-app-header-in-place-of-the-default-icon-when-available",
+      "title": "Add admin-configurable app logo management: provide Admin Panel UI to upload/replace a logo image, persist it in the backend, and display the saved logo in the app header in place of the default icon when available.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-real-user-management-overview-in-the-admin-panel-add-backend-admin-only-apis-to-list-users-and-their-stored-profiles-and-session-status-and-update-the-admin-panel-to-display-this-list-replacing-the-current-placeholder",
+      "title": "Implement real user management/overview in the Admin Panel: add backend admin-only APIs to list users and their stored profiles and session status, and update the Admin Panel to display this list (replacing the current placeholder).",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -30,27 +44,15 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Finish backend for Admin Overview in the Admin Panel",
+      "summary": "Activate Admin Panel UI at /admin with fields for AdMob App ID, Rewarded Ad Unit ID, Logo upload, and user management",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-2",
-      "summary": "Add global AdMob settings in Admin Panel: store and edit AdMob App ID and Rewarded Ad Unit ID",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Add custom logo upload in Admin Panel with backend storage and display",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Add backend storage and admin-only read/write APIs for global AdMob configuration values (AdMob App ID and Rewarded Ad Unit ID) in the single Motoko actor, so the Admin Panel can load existing values and persist updates.",
+      "id": "AR-6",
+      "summary": "Persist new/updated admin settings across upgrades: store global AdMob config and the uploaded logo in stable state, and add/adjust conditional migration logic as needed to preserve existing values on upgrade.",
       "reqIds": [
-        "REQ-2"
+        "REQ-5"
       ],
       "status": "pending"
     }

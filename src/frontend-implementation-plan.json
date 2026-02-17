@@ -1,48 +1,92 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Admin Panel: AdMob Settings inputs + React Query save/load wiring",
+  "title": "VPN Time Unlock: Enable /admin path routing and complete Admin Panel (AdMob, Logo, Users)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Render an admin-only “AdMob Settings” section on the Admin Panel with visible, editable inputs for AdMob App ID and Rewarded Ad Unit ID (no longer hidden behind the placeholder).",
+      "summary": "Replace hash routing with pathname-based /admin routing and update admin navigation toggle to use /admin.",
       "acceptanceCriteria": [
-        "As an admin visiting `#/admin`, I can see two labeled text input fields for AdMob App ID and Rewarded Ad Unit ID.",
-        "The AdMob Settings section is visible even if other Admin Overview features remain incomplete.",
-        "Non-admin users still see the existing access denied UI and cannot see these fields."
+        "When an authenticated admin navigates directly to /admin, the Admin Panel page renders (no manual #/admin hash required).",
+        "When an admin clicks the header navigation toggle, the URL switches between / and /admin and the correct panel renders.",
+        "Non-admin users visiting /admin see the existing Access Denied UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Switch admin routing logic from window.location.hash to window.location.pathname using the History API (pushState/replaceState + popstate listener) so /admin renders AdminPanelPage and / renders VpnSessionPanel; keep admin toggle button navigating between / and /admin; preserve AccessDenied behavior by continuing to rely on AdminPanelPage’s existing admin check."
+        },
+        {
+          "path": "frontend/README.md",
+          "operation": "modify",
+          "description": "Update documentation to reference /admin (not #/admin) as the Admin Panel URL; add a note that production hosting must serve the SPA entry HTML for /admin path refreshes (rewrite to index.html)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Ensure Admin Panel AdMob Settings renders for admins and uses stable effect-based form initialization while loading/saving via backend hooks.",
+      "acceptanceCriteria": [
+        "As an admin, the Admin Panel shows inputs labeled “AdMob App ID” and “Rewarded Ad Unit ID”.",
+        "On first load, if values exist in the backend, the inputs are pre-filled with those values; if not, inputs are empty.",
+        "Clicking “Save” persists the trimmed values and shows an English success toast; backend errors show an English error toast.",
+        "The page does not spam React warnings/errors about setting state during render."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/AdminPanelPage.tsx",
           "operation": "modify",
-          "description": "Add a new Card/section titled “AdMob Settings” within the admin-only content area (below the Admin Status card and independent of the existing “Feature In Development” placeholder). Render two labeled text inputs: “AdMob App ID” and “Rewarded Ad Unit ID”. Keep the existing non-admin access denied UI unchanged. Use the existing admin gating (via `useIsCurrentPrincipalAdmin`) provided by the authorization component to ensure only admins can see the section; Verify the component's usage instructions before implementing."
+          "description": "Remove any state updates during render for AdMob form initialization; initialize appId/rewardedAdUnitId from useGetAppAdMobConfig() via useEffect with a one-time/dirty-state guard so existing backend values prefill once and subsequent user edits are preserved; keep the AdMob Settings section always visible for admins and keep Save behavior trimming values and toasting success/error in English."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Use React Query to load and save global AdMob config (App ID + Rewarded Ad Unit ID) from/to the backend with explicit Save, loading, and success/error UI states in English.",
+      "summary": "Add Admin Panel logo upload/update UI and display the saved logo in the app header when available.",
       "acceptanceCriteria": [
-        "On opening the Admin Panel as an admin, the inputs are prefilled from backend values (or empty if not set).",
-        "Clicking Save persists the values via the backend and the UI reflects the saved state (including after a refresh).",
-        "While saving, the Save control is disabled and a loading indicator is shown.",
-        "On failure, an English error message is displayed and values are not silently lost."
+        "Admin Panel contains a “Logo” (or “Branding”) section with a file picker and a clear Save/Update action.",
+        "Uploaded logo is persisted in the backend and remains available after refresh/relogin.",
+        "App header displays the uploaded logo (with reasonable sizing/cropping) when present; otherwise it falls back to the current default icon.",
+        "Only admins can upload/replace the logo; non-admin calls are rejected."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useAppAdMobConfig.ts",
+          "path": "frontend/src/hooks/useAppLogo.ts",
           "operation": "create",
-          "description": "Create React Query hooks to (1) fetch the current global AdMob config and (2) persist updates, using the backend actor methods already exposed in the frontend types (`getAppAdMobConfig`, `setAppAdMobConfig`). Ensure queries are disabled until an actor is available (consistent with existing hooks) and mutations invalidate/refetch the config query on success. Verify the component's usage instructions before implementing."
+          "description": "Create React Query hooks to load the current logo (getLogo) and upload a new one (uploadLogo) via the backend actor; use the blob-storage component’s ExternalBlob on the frontend to represent the uploaded image and obtain a direct URL for preview/display. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/pages/AdminPanelPage.tsx",
           "operation": "modify",
-          "description": "Wire the “AdMob Settings” inputs to the new React Query hooks: load existing values on page load (prefill, or show empty strings if not set), provide an explicit “Save” action that calls the save mutation, disable the Save control and show a loading indicator while saving, and display English success/error status messages (do not silently discard user edits on failure). Keep the AdMob Settings section visible regardless of the other admin placeholder content. Verify the component's usage instructions before implementing."
+          "description": "Add a “Logo/Branding” card for admins with: (1) current logo preview (if present), (2) file picker (image/*), (3) Save/Update button with upload progress/disabled states; convert selected file bytes to ExternalBlob and call uploadLogo, then show English success/error toasts and refresh cached logo data. Use the blob-storage component (ExternalBlob.fromBytes, optional withUploadProgress) for uploads. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/RewardedAdStubModal.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update the AdMob configuration info display to prefer showing the persisted admin-configured values when available (falling back to the existing `ADMOB_CONFIG` placeholders if no saved config exists), without changing the simulated ad behavior. This helps verify that saved values are reflected in the UI after refresh. Verify the component's usage instructions before implementing."
+          "description": "Load and render the saved app logo in the header when available (using the logo’s ExternalBlob direct URL), falling back to the existing default Shield icon otherwise; ensure reasonable sizing/cropping (e.g., constrained square container). Use the blob-storage component capability of direct URL access for rendering. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Replace the Admin Panel placeholder with a real Users & Sessions overview UI powered by backend user overview data.",
+      "acceptanceCriteria": [
+        "Backend exposes an admin-only method to fetch an overview of known users including: principal, optional profile (name), and whether a session exists (and expiry if available).",
+        "Admin Panel “Users & Sessions Overview” section displays a table/list of users showing principal, name (if set), and session status.",
+        "The user overview loads only for admins and shows an English loading state and an English empty-state when there are no users.",
+        "Non-admin callers cannot access the overview API (traps/returns an authorization error)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useAdminPanel.ts",
+          "operation": "modify",
+          "description": "Replace the placeholder overview hook with a real admin-only query that calls the backend actor’s getUserOverview() (enabled only when actor is ready and isAdmin is true); normalize returned data into a frontend-friendly list (principal, optional name, session existence + expiry when available) and ensure authorization errors surface cleanly to the UI."
+        },
+        {
+          "path": "frontend/src/pages/AdminPanelPage.tsx",
+          "operation": "modify",
+          "description": "Replace the Users & Sessions Overview placeholder card with a real table/list view driven by the updated admin overview hook; show English loading state while fetching, English empty state when no users exist, and render rows with principal, optional profile name, and session status (including expiry when present). Handle backend authorization errors by showing an English error toast/message while keeping non-admins gated by the existing Access Denied UI."
         }
       ]
     }

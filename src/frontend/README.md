@@ -14,7 +14,8 @@ A web-based prototype demonstrating a VPN access control system with rewarded ad
 - ✅ Manual disconnect functionality
 - ✅ User authentication via Internet Identity
 - ✅ Admin panel for user and session management
-- ✅ AdMob configuration placeholders
+- ✅ AdMob configuration management
+- ✅ Custom logo upload and branding
 
 ### What This Prototype Does NOT Include:
 - ❌ Real Google AdMob SDK integration (requires native Android)
@@ -68,7 +69,9 @@ A web-based prototype demonstrating a VPN access control system with rewarded ad
 ## 🔐 Admin Access
 
 ### Admin Panel URL
-The admin panel is accessible at: `http://localhost:3000/#/admin`
+The admin panel is accessible at: `http://localhost:3000/admin`
+
+**Note:** Production hosting must serve the SPA entry HTML for `/admin` path refreshes (rewrite to `index.html`).
 
 ### How to Become an Administrator
 
@@ -89,18 +92,29 @@ The admin panel is accessible at: `http://localhost:3000/#/admin`
 3. **Access the Admin Panel**
    - Once you're an admin, an "Admin Panel" button will appear in the header
    - Click it to navigate to the admin panel
-   - Or directly visit: `http://localhost:3000/#/admin`
+   - Or directly visit: `http://localhost:3000/admin`
 
 ### Admin Panel Features
 
-The admin panel displays:
-- **Your Principal ID**: Your unique Internet Identity principal
-- **Admin Status**: Confirmation that you have administrator privileges
-- **Users & Sessions Overview**: A table showing:
-  - All registered user principals
-  - User profile names (if set)
-  - Session status (Active, Expired, or No Session)
-  - Session expiration timestamps
+The admin panel provides:
+
+#### 1. **AdMob Settings**
+- Configure AdMob App ID
+- Configure Rewarded Ad Unit ID
+- Save and persist configuration across sessions
+- View helpful links to AdMob console
+
+#### 2. **App Logo Management**
+- Upload custom logo for your application
+- Preview current logo
+- Update logo at any time
+- Logo appears in the app header automatically
+
+#### 3. **Users & Sessions Overview**
+- View all registered users with their principals and names
+- See active and expired sessions
+- Monitor session expiration timestamps
+- Track user engagement
 
 ### Security Notes
 
@@ -117,3 +131,4 @@ When deploying to production:
 1. Ensure the `caffeineAdminToken` is kept secure and not shared publicly
 2. The first user to log in with the correct token becomes an admin
 3. Additional admins can be granted access through the backend's role management system
+4. Configure your hosting to rewrite `/admin` requests to `index.html` for proper SPA routing

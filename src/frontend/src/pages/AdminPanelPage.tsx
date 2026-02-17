@@ -1,41 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useIsCurrentPrincipalAdmin, useGetAdminOverview } from '../hooks/useAdminPanel';
 import { useGetAppAdMobConfig, useSetAppAdMobConfig } from '../hooks/useAppAdMobConfig';
+import { useGetLogo, useUploadLogo } from '../hooks/useAppLogo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2, ShieldCheck, ShieldX, Users, AlertCircle, Save, Smartphone, Image as ImageIcon, Upload } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import { ExternalBlob } from '../backend';
 
 export default function AdminPanelPage() {
   const { identity } = useInternetIdentity();
   const { data: isAdmin, isLoading: isAdminLoading } = useIsCurrentPrincipalAdmin();
   const { data: overview, isLoading: overviewLoading } = useGetAdminOverview();
   const { data: adMobConfig, isLoading: adMobConfigLoading } = useGetAppAdMobConfig();
+  const { data: currentLogo, isLoading: logoLoading } = useGetLogo();
   const setAdMobConfig = useSetAppAdMobConfig();
+  const uploadLogo = useUploadLogo();
 
   const [appId, setAppId] = useState('');
   const [rewardedAdUnitId, setRewardedAdUnitId] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [hasInitializedAdMob, setHasInitializedAdMob] = useState(false);
 
   const callerPrincipal = identity?.getPrincipal().toString() || 'Not authenticated';
 
-  // Initialize form fields when config loads
-  useState(() => {
-    if (adMobConfig) {
+  // Initialize AdMob form fields when config loads (using useEffect to avoid state updates during render)
+  useEffect(() => {
+    if (adMobConfig && !hasInitializedAdMob) {
       setAppId(adMobConfig.appId);
       setRewardedAdUnitId(adMobConfig.rewardedAdUnitId);
+      setHasInitializedAdMob(true);
     }
-  });
+  }, [adMobConfig, hasInitializedAdMob]);
 
-  // Update form when config changes
-  if (adMobConfig && appId === '' && rewardedAdUnitId === '') {
-    setAppId(adMobConfig.appId);
-    setRewardedAdUnitId(adMobConfig.rewardedAdUnitId);
-  }
+  // Handle logo file selection
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSaveAdMobConfig = async () => {
     try {
@@ -47,6 +68,36 @@ export default function AdminPanelPage() {
     } catch (error: any) {
       console.error('Failed to save AdMob config:', error);
       toast.error(error.message || 'Failed to save AdMob configuration');
+    }
+  };
+
+  const handleUploadLogo = async () => {
+    if (!logoFile) {
+      toast.error('Please select a logo file');
+      return;
+    }
+
+    try {
+      const arrayBuffer = await logoFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      
+      const externalBlob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
+        setUploadProgress(percentage);
+      });
+
+      await uploadLogo.mutateAsync({
+        file: externalBlob,
+        mediaType: logoFile.type,
+      });
+
+      toast.success('Logo uploaded successfully');
+      setLogoFile(null);
+      setLogoPreview(null);
+      setUploadProgress(0);
+    } catch (error: any) {
+      console.error('Failed to upload logo:', error);
+      toast.error(error.message || 'Failed to upload logo');
+      setUploadProgress(0);
     }
   };
 
@@ -124,6 +175,108 @@ export default function AdminPanelPage() {
             </p>
             <p className="text-xs font-mono break-all">{callerPrincipal}</p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Logo/Branding Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <ImageIcon className="w-6 h-6 text-primary" />
+            <div>
+              <CardTitle>App Logo</CardTitle>
+              <CardDescription>Upload and manage your application logo</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {logoLoading ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading logo...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Current Logo Preview */}
+              {currentLogo && (
+                <div className="space-y-2">
+                  <Label>Current Logo</Label>
+                  <div className="w-32 h-32 rounded-lg border-2 border-muted overflow-hidden bg-muted flex items-center justify-center">
+                    <img
+                      src={currentLogo.file.getDirectURL()}
+                      alt="Current Logo"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Upload New Logo */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="logoFile">Upload New Logo</Label>
+                  <Input
+                    id="logoFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoFileChange}
+                    disabled={uploadLogo.isPending}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Select an image file (PNG, JPG, SVG, etc.) to use as your app logo
+                  </p>
+                </div>
+
+                {/* Preview Selected Logo */}
+                {logoPreview && (
+                  <div className="space-y-2">
+                    <Label>Preview</Label>
+                    <div className="w-32 h-32 rounded-lg border-2 border-primary overflow-hidden bg-muted flex items-center justify-center">
+                      <img
+                        src={logoPreview}
+                        alt="Logo Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Progress */}
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Uploading...</span>
+                      <span className="font-medium">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-primary h-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleUploadLogo}
+                  disabled={!logoFile || uploadLogo.isPending}
+                  className="min-w-32"
+                >
+                  {uploadLogo.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      {currentLogo ? 'Update Logo' : 'Upload Logo'}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -225,7 +378,7 @@ export default function AdminPanelPage() {
         </CardContent>
       </Card>
 
-      {/* Users Overview Card - Placeholder */}
+      {/* Users & Sessions Overview Card */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -237,22 +390,99 @@ export default function AdminPanelPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Feature In Development</AlertTitle>
-            <AlertDescription>
-              The user overview feature requires additional backend functionality. The backend needs to
-              implement a <code className="text-xs bg-muted px-1 py-0.5 rounded">getAdminOverview()</code> method
-              that returns user principals, profiles, and session data.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-6 py-8 text-center text-muted-foreground">
-            <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">User Management Coming Soon</p>
-            <p className="text-sm mt-2">
-              Once the backend is updated, you'll be able to view all users and their sessions here.
-            </p>
-          </div>
+          {overviewLoading ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading user overview...</p>
+            </div>
+          ) : overview && (overview.userProfiles.length > 0 || overview.sessions.length > 0) ? (
+            <div className="space-y-6">
+              {/* Users Table */}
+              {overview.userProfiles.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Registered Users</h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Principal</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Session Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {overview.userProfiles.map(([principal, profile]) => {
+                          const session = overview.sessions.find(([p]) => p.toString() === principal.toString());
+                          const hasSession = !!session;
+                          const isActive = hasSession && session[1].unlockExpiresAt > BigInt(Date.now() * 1_000_000);
+                          
+                          return (
+                            <TableRow key={principal.toString()}>
+                              <TableCell className="font-mono text-xs">{principal.toString()}</TableCell>
+                              <TableCell>{profile.name}</TableCell>
+                              <TableCell>
+                                {hasSession ? (
+                                  <Badge variant={isActive ? 'default' : 'secondary'}>
+                                    {isActive ? 'Active' : 'Expired'}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline">No Session</Badge>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Sessions Table */}
+              {overview.sessions.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Active Sessions</h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Principal</TableHead>
+                          <TableHead>Expires At</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {overview.sessions.map(([principal, session]) => {
+                          const expiresAt = new Date(Number(session.unlockExpiresAt / BigInt(1_000_000)));
+                          const isActive = session.unlockExpiresAt > BigInt(Date.now() * 1_000_000);
+                          
+                          return (
+                            <TableRow key={principal.toString()}>
+                              <TableCell className="font-mono text-xs">{principal.toString()}</TableCell>
+                              <TableCell className="text-sm">{expiresAt.toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant={isActive ? 'default' : 'secondary'}>
+                                  {isActive ? 'Active' : 'Expired'}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">No Users Yet</p>
+              <p className="text-sm mt-2">
+                Users will appear here once they log in and create profiles.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -8,10 +8,15 @@ import Principal "mo:core/Principal";
 import Order "mo:core/Order";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
+  include MixinStorage();
 
   public type AppAdMobConfig = {
     appId : Text;
@@ -32,6 +37,17 @@ actor {
     };
   };
 
+  public type UserOverview = {
+    userProfiles : [(Principal, UserProfile)];
+    sessions : [(Principal, SessionInfo)];
+  };
+
+  public type AppLogo = {
+    mediaType : Text;
+    file : Storage.ExternalBlob;
+  };
+
+  var logo : ?AppLogo = null;
   var appAdMobConfig : ?AppAdMobConfig = null;
   let sessions = Map.empty<Principal, SessionInfo>();
   let userProfiles = Map.empty<Principal, UserProfile>();
@@ -43,6 +59,17 @@ actor {
 
   public query ({ caller }) func isCurrentPrincipalAdmin() : async Bool {
     AccessControl.isAdmin(accessControlState, caller);
+  };
+
+  public query ({ caller }) func getLogo() : async ?AppLogo {
+    logo;
+  };
+
+  public shared ({ caller }) func uploadLogo(newLogo : AppLogo) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can upload logos");
+    };
+    logo := ?newLogo;
   };
 
   // AdMob config management functions
@@ -120,5 +147,16 @@ actor {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
+  };
+
+  public query ({ caller }) func getUserOverview() : async UserOverview {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view user overview");
+    };
+
+    {
+      userProfiles = userProfiles.toArray();
+      sessions = sessions.toArray();
+    };
   };
 };

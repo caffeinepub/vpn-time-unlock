@@ -14,13 +14,45 @@ export interface AppAdMobConfig {
   'appId' : string,
   'rewardedAdUnitId' : string,
 }
+export interface AppLogo { 'file' : ExternalBlob, 'mediaType' : string }
+export type ExternalBlob = Uint8Array;
 export interface SessionInfo { 'unlockExpiresAt' : Time }
 export type Time = bigint;
+export interface UserOverview {
+  'userProfiles' : Array<[Principal, UserProfile]>,
+  'sessions' : Array<[Principal, SessionInfo]>,
+}
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearSessions' : ActorMethod<[], undefined>,
@@ -28,7 +60,9 @@ export interface _SERVICE {
   'getAppAdMobConfig' : ActorMethod<[], [] | [AppAdMobConfig]>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getLogo' : ActorMethod<[], [] | [AppLogo]>,
   'getSessions' : ActorMethod<[], SessionInfo>,
+  'getUserOverview' : ActorMethod<[], UserOverview>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCurrentPrincipalAdmin' : ActorMethod<[], boolean>,
@@ -36,6 +70,7 @@ export interface _SERVICE {
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setAppAdMobConfig' : ActorMethod<[AppAdMobConfig], undefined>,
   'unlockSessions' : ActorMethod<[], undefined>,
+  'uploadLogo' : ActorMethod<[AppLogo], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
